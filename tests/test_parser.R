@@ -6,7 +6,8 @@ m1 <- '
   Z =~ z1 + z2 + z3
   
   # Inner model
-  Y ~ X + Z
+  Y ~ a*X + Z
 '
 
-tokenizer(m1)
+tokens <- tokenizer(m1)
+parseTokens(tokens)

@@ -24,11 +24,12 @@ tokenizer <- function(string) {
 
 
 getTokenType <- function(char) {
+  char <- stringr::str_split_1(char, "")[1]
   if      (grepl("[[:alpha:]]", char)) "name"
   else if (grepl("[[:digit:]]", char)) "numeric"
   else switch(char,
-              "+" = "simple_op", "*" = "simple_op", 
-              "~" = "large_op", "=" = "large_op",
+              "+" = "simple.op", "*" = "simple.op", 
+              "~" = "large.op", "=" = "large.op",
               "#" = "comment", "\n" = "newline")
 }
 
@@ -38,8 +39,8 @@ fitsToken <- function(char, token, tokenT) {
   switch(tokenT, 
          name      = grepl("[[:alpha:]]|[[:digit:]]", char),
          numeric   = grepl("[[:alpha:]]", char),
-         simple_op = FALSE,
-         large_op  = paste0(token, char) %in% c("=~", "~~"),
+         simple.op = FALSE,
+         large.op  = paste0(token, char) %in% c("=~", "~~"),
          comment   = char != "\n",
          newline   = FALSE,
          stop("unrecoginized token type: ", tokenT)
@@ -52,34 +53,77 @@ getNextToken <- function(tokens, i, N) {
   tokens[i + 1]
 }
 
+tokenExprsToParTable <- function(exprs) {
+  parTable <- NULL
+
+  for (lhs in exprs$lhs) {
+    row <- data.frame(lhs=lhs, op=exprs$op, rhs=exprs$rhs, 
+                      label=exprs$label, const=exprs$const)
+    parTable <- rbind(parTable, row)
+  }
+
+  parTable
+}
 
 parseTokens <- function(tokens) {
   parTable <- NULL
   # parTable <- data.frame(lhs=NULL, op=NULL, rhs=NULL, label=NULL, numeric=NULL)
-  emptyRow   <- list(lhs=NA, op=NA, rhs=NA, label=NA, numeric=NA)
-  currentRow <- emptyRow
+  emptyTokenExprs   <- list(lhs=NULL, op=NULL, rhs=NULL, label=NULL, const=NULL)
+  currentTokenExprs <- emptyTokenExprs
 
-  position <- "lhs"
+  position   <- "lhs"
+  state      <- "open"
+  labelMod   <- NA
+  constMod   <- NA
   for (i in seq_along(tokens)) {
     token      <- tokens[i]
-    tokenT     <- getTokenType(token[1])
+    tokenT     <- getTokenType(token)
     nextToken  <- getNextToken(tokens, i=i, N=length(tokens))
-    NextTokenT <- getTokenType(token[1])
-    if (nextToken == "*" && position == "rhs") {
+    NextTokenT <- getTokenType(token)
+
+    if (!is.null(nextToken) && nextToken == "*" && position == "rhs") {
       if (NextTokenT == "name") 
-        currentRow$label <- c(currentRow$label, nextToken)
+        labelMod   <- token
       else if (NextTokenT == "numeric") 
-        currentRow$numeric <- c(currentRow$numeric, nextToken)
-    } else if (nextToken == "*") {
+        constMod <- token
+
+    } else if (!is.null(nextToken) && nextToken == "*" && position == "lhs") {
       stop("* not allowed for lhs")
+
     } else if (tokenT %in% c("name", "numeric")) {
-      currentRow[[position]] <- c(currentRow[[position]], token)
-    } else if (tokenT == "large_op") {
-  
-    }
-    else if (tokenT == "newline") {
-      parTable <- c(parTable, currentRow)
-      currentRow <- emptyRow
-    }
+      if (state == "closed") stop("Unexpected token: ", token)
+      state <- "closed"
+
+      currentTokenExprs[[position]] <- c(currentTokenExprs[[position]], token)
+      if (position == "rhs") {
+        currentTokenExprs$label <- labelMod
+        currentTokenExprs$const <- constMod
+      }
+
+
+    } else if (tokenT == "large.op") {
+      currentTokenExprs$op <- token
+      position <- "rhs"
+      state    <- "open"
+
+    } else if (token == "+") {
+      if (state == "open") stop("Unexpected `+`")
+      state <- "open"
+
+    } else if (tokenT == "newline" && state == "closed") {
+      parTable          <- rbind(parTable, tokenExprsToParTable(currentTokenExprs))
+      currentTokenExprs <- emptyTokenExprs
+      position   <- "lhs"
+      state      <- "open"
+      labelMod   <- NA
+      constMod   <- NA
+    } 
+    # else if (i >= length(tokens) && ) stop("Unexpected end of input")
   }
+
+  if (state == "closed") {
+      parTable <- rbind(parTable, tokenExprsToParTable(currentTokenExprs))
+  }
+
+  parTable
 }
