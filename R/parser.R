@@ -58,14 +58,14 @@ lastChar <- function(string) {
 fitsToken <- function(char, token, tokenT) {
   if (is.null(tokenT)) return(FALSE)
   switch(tokenT, 
-         name      = grepl("[[:alpha:]]|[[:digit:]]", char),
+         name      = grepl("[[:alpha:]]|[[:digit:]]|_|\\.", char),
          numeric   = grepl("[[:alpha:]]", char),
          simple.op = FALSE,
          large.op  = paste0(token, char) %in% LARGE_OPS,
          comment   = char != "\n",
          newline   = FALSE,
          closure   = lastChar(token) != ")",
-         stop("unrecoginized token type: ", tokenT)
+         stop2("unrecoginized token type: ", tokenT)
   ) 
 }
 
@@ -91,23 +91,18 @@ tokenExprsToParTable <- function(exprs) {
 
 
 parseTokens <- function(tokens) {
+  empty    <- list(lhs=NULL, op=NULL, rhs=NULL, label=NULL, 
+                   const=NULL, func=NULL, closure=NULL)
   parTable <- NULL
-  # parTable <- data.frame(lhs=NULL, op=NULL, rhs=NULL, label=NULL, numeric=NULL)
-  emptyTokenExprs   <- list(lhs=NULL, op=NULL, rhs=NULL, label=NULL, const=NULL,
-                            func=NULL, closure=NULL)
-  currentTokenExprs <- NULL 
-
-  position <- "lhs"
+  current  <- NULL 
+  pos      <- "lhs"
   state    <- "open"
   exprType <- "standard"
   labelMod <- constMod <- closureMod <- funcMod <- NA
   skipNext <- FALSE
 
   for (i in seq_along(tokens)) {
-    if (skipNext) {
-      skipNext <- FALSE
-      next
-    }
+    if (skipNext) {skipNext <- FALSE; next}
 
     token       <- tokens[i]
     tokenT      <- getTokenType(token)
@@ -118,29 +113,26 @@ parseTokens <- function(tokens) {
 
     if (exprType == "math") {
       if (token == "\n" && state == "closed") {
-        currentTokenExprs$label   <- c(currentTokenExprs$label, NA)
-        currentTokenExprs$const   <- c(currentTokenExprs$const, NA)
-        currentTokenExprs$func    <- c(currentTokenExprs$func,  NA)
-        currentTokenExprs$closure <- c(currentTokenExprs$closure, NA)
+        current$label   <- c(current$label, NA)
+        current$const   <- c(current$const, NA)
+        current$func    <- c(current$func,  NA)
+        current$closure <- c(current$closure, NA)
 
-        parTable <- rbind(parTable, tokenExprsToParTable(currentTokenExprs))
+        parTable <- rbind(parTable, tokenExprsToParTable(current))
         exprType <- "standard" 
-        position <- "lhs"
+        pos      <- "lhs"
         state    <- "open"
-        currentTokenExprs <- NULL 
+        current  <- NULL 
           
       } else {
-        mathExpr <- paste0(currentTokenExprs[[position]], 
-                           ifelse(token == "\n", yes="", no=token))
-        currentTokenExprs[[position]] <- mathExpr
+        mathExpr <- paste0(current[[pos]], ifelse(token == "\n", yes="", no=token))
+        current[[pos]] <- mathExpr
         state <- ifelse(tokenT == "simple.op", yes="open", no="closed")
       }
 
-    } else if (!is.null(nextToken) && nextToken == "*" && position == "rhs") {
-      if (tokenT == "name") 
-        labelMod <- token
-      else if (tokenT == "numeric") 
-        constMod <- token
+    } else if (!is.null(nextToken) && nextToken == "*" && pos == "rhs") {
+      if      (tokenT == "name")    labelMod <- token
+      else if (tokenT == "numeric") constMod <- token
       skipNext <- TRUE
 
     } else if (!is.null(nextToken) && !is.null(nextToken2T) && 
@@ -149,42 +141,41 @@ parseTokens <- function(tokens) {
       closureMod <- nextToken
       skipNext   <- TRUE
   
-    } else if (!is.null(nextToken) && nextToken == "*" && position == "lhs") {
-      stop("* not allowed for lhs") 
+    } else if (!is.null(nextToken) && nextToken == "*" && pos == "lhs") {
+      stop2("* not allowed for lhs") 
       
     } else if (tokenT %in% c("name", "numeric")) {
-      if (state == "closed") stop("Unexpected token: ", token)
-      if (is.null(currentTokenExprs)) currentTokenExprs <- emptyTokenExprs
-      state <- "closed"
+      if (state == "closed") stop2("Unexpected token: ", token)
+      if (is.null(current)) current <- empty
+      
+      state          <- "closed"
+      current[[pos]] <- c(current[[pos]], token)
 
-      currentTokenExprs[[position]] <- c(currentTokenExprs[[position]], token)
-      if (position == "rhs") {
-        currentTokenExprs$label    <- c(currentTokenExprs$label, labelMod)
-        currentTokenExprs$const    <- c(currentTokenExprs$const, constMod)
-        currentTokenExprs$func     <- c(currentTokenExprs$func, funcMod)
-        currentTokenExprs$closure  <- c(currentTokenExprs$closure, closureMod)
+      if (pos == "rhs") {
+        current$label   <- c(current$label, labelMod)
+        current$const   <- c(current$const, constMod)
+        current$func    <- c(current$func, funcMod)
+        current$closure <- c(current$closure, closureMod)
         labelMod <- constMod <- closureMod <- funcMod <- NA
       }
 
     } else if (tokenT == "large.op") {
-      currentTokenExprs$op <- token
-      position <- "rhs"
-      state    <- "open"
-      exprType <- ifelse(token %in% LARGE_MATH_OPS, yes="math", no="standard")
+      current$op <- token
+      pos        <- "rhs"
+      state      <- "open"
+      exprType   <- ifelse(token %in% LARGE_MATH_OPS, yes="math", no="standard")
 
     } else if (token == "+") {
-      if (state == "open") stop("Unexpected `+`")
+      if (state == "open") stop2("Unexpected `+`")
       state <- "open"
 
     } else if (tokenT == "newline" && state == "closed") {
-      parTable          <- rbind(parTable, tokenExprsToParTable(currentTokenExprs))
-      currentTokenExprs <- NULL 
-      position   <- "lhs"
-      state      <- "open"
+      parTable <- rbind(parTable, tokenExprsToParTable(current))
+      current  <- NULL 
+      pos      <- "lhs"
+      state    <- "open"
 
-    } else if (i >= length(tokens) && is.null(currentTokenExprs)) {
-      stop("Unexpected end of input")
-    }
+    } else stopif(i >= length(tokens) && !is.null(current), "Unexpected end of input")
   }
 
   parTable
@@ -192,5 +183,11 @@ parseTokens <- function(tokens) {
 
 
 cavaanify <- function(syntax) {
-  parseTokens(tokenizeSyntax(syntax))
+  parTable <- parseTokens(tokenizeSyntax(syntax))
+
+  isIntercept <- parTable$op == "~" & parTable$rhs == "1"
+  parTable[isIntercept, "rhs"] <- ""
+  parTable[isIntercept, "op"]  <- "~1"
+
+  parTable
 }
