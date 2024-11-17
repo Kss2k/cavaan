@@ -1,4 +1,8 @@
-tokenizer <- function(string) {
+LARGE_MATH_OPS <- c(":=", ">=", "<=", "==")
+LARGE_OPS <- c("~", "~~", "=~", ":=", ">=", "<=", "==")
+
+
+tokenizeSyntax <- function(string) {
   chars <- stringr::str_split_1(string, "")
 
   tokens <- character(0L)
@@ -19,8 +23,8 @@ tokenizer <- function(string) {
       tokenT <- getTokenType(char=char)
     }
   }
-
-  tokens
+  if (last(tokens) != "\n") c(tokens, "\n")
+  else tokens
 }
 
 
@@ -31,8 +35,11 @@ getTokenType <- function(char) {
   else if (grepl("[[:digit:]]", char)) "numeric"
   else switch(char,
               "+" = "simple.op", "*" = "simple.op", 
+              "/" = "simple.op", "^" = "simple.op", 
+              "-" = "simple.op", 
               "~" = "large.op", "=" = "large.op",
-              "(" = "closure", 
+              "<" = "large.op", ">" = "large.op",
+              ":" = "large.op", "(" = "closure", 
               "#" = "comment", "\n" = "newline")
 }
 
@@ -54,7 +61,7 @@ fitsToken <- function(char, token, tokenT) {
          name      = grepl("[[:alpha:]]|[[:digit:]]", char),
          numeric   = grepl("[[:alpha:]]", char),
          simple.op = FALSE,
-         large.op  = paste0(token, char) %in% c("=~", "~~"),
+         large.op  = paste0(token, char) %in% LARGE_OPS,
          comment   = char != "\n",
          newline   = FALSE,
          closure   = lastChar(token) != ")",
@@ -92,6 +99,7 @@ parseTokens <- function(tokens) {
 
   position <- "lhs"
   state    <- "open"
+  exprType <- "standard"
   labelMod <- constMod <- closureMod <- funcMod <- NA
   skipNext <- FALSE
 
@@ -108,7 +116,27 @@ parseTokens <- function(tokens) {
     nextToken2  <- getNextToken(tokens, i=i+1, N=length(tokens))
     nextToken2T <- getTokenType(nextToken2)
 
-    if (!is.null(nextToken) && nextToken == "*" && position == "rhs") {
+    if (exprType == "math") {
+      if (token == "\n" && state == "closed") {
+        currentTokenExprs$label   <- c(currentTokenExprs$label, NA)
+        currentTokenExprs$const   <- c(currentTokenExprs$const, NA)
+        currentTokenExprs$func    <- c(currentTokenExprs$func,  NA)
+        currentTokenExprs$closure <- c(currentTokenExprs$closure, NA)
+
+        parTable <- rbind(parTable, tokenExprsToParTable(currentTokenExprs))
+        exprType <- "standard" 
+        position <- "lhs"
+        state    <- "open"
+        currentTokenExprs <- NULL 
+          
+      } else {
+        mathExpr <- paste0(currentTokenExprs[[position]], 
+                           ifelse(token == "\n", yes="", no=token))
+        currentTokenExprs[[position]] <- mathExpr
+        state <- ifelse(tokenT == "simple.op", yes="open", no="closed")
+      }
+
+    } else if (!is.null(nextToken) && nextToken == "*" && position == "rhs") {
       if (tokenT == "name") 
         labelMod <- token
       else if (tokenT == "numeric") 
@@ -142,6 +170,7 @@ parseTokens <- function(tokens) {
       currentTokenExprs$op <- token
       position <- "rhs"
       state    <- "open"
+      exprType <- ifelse(token %in% LARGE_MATH_OPS, yes="math", no="standard")
 
     } else if (token == "+") {
       if (state == "open") stop("Unexpected `+`")
@@ -152,17 +181,16 @@ parseTokens <- function(tokens) {
       currentTokenExprs <- NULL 
       position   <- "lhs"
       state      <- "open"
-      labelMod   <- NA
-      constMod   <- NA
 
     } else if (i >= length(tokens) && is.null(currentTokenExprs)) {
       stop("Unexpected end of input")
     }
   }
 
-  if (state == "closed") {
-      parTable <- rbind(parTable, tokenExprsToParTable(currentTokenExprs))
-  }
-
   parTable
+}
+
+
+cavaanify <- function(syntax) {
+  parseTokens(tokenizeSyntax(syntax))
 }

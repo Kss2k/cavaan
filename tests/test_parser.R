@@ -8,7 +8,11 @@ m1 <- '
   
   # Inner model
   Y ~ a*X + c*Z
+
+  h := 1 * a / 8 ^ 2
+  e == 1 * a / 8 ^ 2
+  f >= 1 * a / 8 ^ 2
+  g <= 1 * a / 8 ^ 2
 '
 
-tokens <- tokenizer(m1)
-parseTokens(tokens)
+cavaanify(m1)
