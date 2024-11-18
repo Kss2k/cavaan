@@ -21,6 +21,7 @@ build_submodel <- function(parTable) {
     Gamma=Gamma, 
     Phi=Phi, 
     G=G,
+    B=B,
     BStar=BStar,
     GammaStar=GammaStar
   )

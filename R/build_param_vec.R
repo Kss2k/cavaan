@@ -1,8 +1,6 @@
 getDetailedParTable <- function(models, parTable, seed=pi) {
   set.seed(seed)
 
-  warning("B is not correctly filled, FIX ME!")
-
   groups <- unique(parTable$group)
   groups <- ifelse(all(groups == ""), yes=1, no=groups)
   for (group in groups) {
@@ -38,11 +36,14 @@ buildParamGamma <- function(models, row) {
   model <- models[[group]]
 
   G <- model$matrices$Gamma
+  B <- model$matrices$B
 
   lhs   <- row$lhs
   op    <- row$op
   rhs   <- row$rhs
   label <- row$label
+  etas  <- model$info$etas
+  isEta <- rhs %in% etas
 
   if (op == "~") {
     r <- lhs
@@ -54,15 +55,19 @@ buildParamGamma <- function(models, row) {
     stop2("unrecoginized operator: ", row$op)
   }
 
-  i     <- which(rownames(G) == r)
-  j     <- which(colnames(G) == c)
+  M     <- if (isEta) B else G
+  i     <- which(rownames(M) == r)
+  j     <- which(colnames(M) == c)
   free  <- TRUE
   label <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
 
-  stopif(nunique(c(length(i), length(j))) != 1, "row and col must be unique")
+  matrix       <- ifelse(isEta, yes=0, no=1)
+  matrix.label <- ifelse(isEta, yes="BStar", no="GammaStar")
+
+  stopif(!validRowColMatch(i=i, j=j), "row and col must be unique")
   
   data.frame(lhs=lhs, op=op, rhs=rhs, est=runif(1), label=label, row=i, col=j, 
-             matrix=1, matrix.label="Gamma", free=free, group=group)
+             matrix=matrix, matrix.label=matrix.label, free=free, group=group)
 }
 
 
@@ -84,7 +89,7 @@ buildParamPhi <- function(models, row) {
   j     <- which(colnames(G) == c)
   label <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
 
-  stopif(nunique(c(length(i), length(j))) != 1, "row and col must be unique")
+  stopif(!validRowColMatch(i=i, j=j), "row and col must be unique")
 
   if (j != i) {
     rows <- c(i, j)
@@ -164,4 +169,10 @@ constrainParams <- function(parTable, fix.first=TRUE) {
   }
 
   parTable
+}
+
+
+validRowColMatch <- function(i, j) {
+  nunique(c(length(i), length(j))) == 1 &&
+    unique(c(length(i), length(j))) == 1
 }
