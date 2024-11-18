@@ -14,7 +14,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 LinkingTo: Rcpp, RcppArmadillo
-Imports: Rcpp, purrr, stringr, rlang, dplyr
+Imports: Rcpp, stringr
 Depends: 
     R (>= 3.5.0)
 URL: https://github.com/Kss2k/cavaan

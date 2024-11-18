@@ -66,8 +66,9 @@ buildParamGamma <- function(models, row) {
 
   stopif(!validRowColMatch(i=i, j=j), "row and col must be unique")
   
-  data.frame(lhs=lhs, op=op, rhs=rhs, est=runif(1), label=label, row=i, col=j, 
-             matrix=matrix, matrix.label=matrix.label, free=free, group=group)
+  data.frame(lhs=lhs, op=op, rhs=rhs, est=stats::runif(1),
+             label=label, row=i, col=j, matrix=matrix,
+             matrix.label=matrix.label, free=free, group=group)
 }
 
 
@@ -101,8 +102,9 @@ buildParamPhi <- function(models, row) {
     free <- TRUE
   }
   
-  data.frame(lhs=lhs, op=op, rhs=rhs, est=runif(1), label=label, row=rows, col=cols, 
-             matrix=2, matrix.label="Phi", free=free, group=group)
+  data.frame(lhs=lhs, op=op, rhs=rhs, est=stats::runif(1),
+             label=label, row=rows, col=cols, matrix=2,
+             matrix.label="Phi", free=free, group=group)
 }
 
 
