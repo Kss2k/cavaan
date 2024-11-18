@@ -98,7 +98,7 @@ parseTokens <- function(tokens) {
   pos      <- "lhs"
   state    <- "open"
   exprType <- "standard"
-  labelMod <- constMod <- closureMod <- funcMod <- NA
+  labelMod <- constMod <- closureMod <- funcMod <- ""
   skipNext <- FALSE
 
   for (i in seq_along(tokens)) {
@@ -113,10 +113,10 @@ parseTokens <- function(tokens) {
 
     if (exprType == "math") {
       if (token == "\n" && state == "closed") {
-        current$label   <- c(current$label, NA)
-        current$const   <- c(current$const, NA)
-        current$func    <- c(current$func,  NA)
-        current$closure <- c(current$closure, NA)
+        current$label   <- c(current$label, "")
+        current$const   <- c(current$const, "")
+        current$func    <- c(current$func,  "")
+        current$closure <- c(current$closure, "")
 
         parTable <- rbind(parTable, tokenExprsToParTable(current))
         exprType <- "standard" 
@@ -156,7 +156,7 @@ parseTokens <- function(tokens) {
         current$const   <- c(current$const, constMod)
         current$func    <- c(current$func, funcMod)
         current$closure <- c(current$closure, closureMod)
-        labelMod <- constMod <- closureMod <- funcMod <- NA
+        labelMod <- constMod <- closureMod <- funcMod <- ""
       }
 
     } else if (tokenT == "large.op") {
@@ -182,12 +182,34 @@ parseTokens <- function(tokens) {
 }
 
 
-cavaanify <- function(syntax) {
-  parTable <- parseTokens(tokenizeSyntax(syntax))
+parseClosure <- function(string) {
+  if (is.na(string) || string == "") return(NULL)
+  out <- stringr::str_split_1(string, pattern="\\(|,|\\)") |>
+    stringr::str_remove_all(pattern=" ") |> (\(x) x[x != ""])()
+  if (!length(out)) return(NULL)
+  out
+}
 
-  isIntercept <- parTable$op == "~" & parTable$rhs == "1"
-  parTable[isIntercept, "rhs"] <- ""
-  parTable[isIntercept, "op"]  <- "~1"
 
-  parTable
+parseClosures <- function(strings) {
+  nelems <- unique(countElemsClosure(strings[strings != ""]))
+  stopif(length(nelems) > 1, "Number of elements in c() functions do not match")
+
+  labels <- matrix(NA, nrow=length(strings), ncol=nelems)
+  
+  for (i in seq_along(strings)) {
+    string <- strings[i]
+    elems  <- parseClosure(string)
+    if (is.null(elems)) next
+
+    labels[i, seq_along(elems)] <- elems
+  
+  }
+
+  labels
+}
+
+
+countElemsClosure <- function(string) {
+  vapply(string, FUN.VALUE=numeric(1L), FUN=\(s) length(parseClosure(s)))
 }

@@ -1,4 +1,4 @@
-build_model <- function(parTable) {
+build_submodel <- function(parTable) {
   etas  <- getEtas(parTable, sorted=TRUE)
   xis   <- getXis(parTable)
   mVYs  <- getMVYs(parTable)
@@ -23,6 +23,30 @@ build_model <- function(parTable) {
     GammaStar=GammaStar
   )
 
+  info <- list(
+    etas=etas,
+    xis=xis,
+    mVYs=mVYs,
+    mVXs=mVXs
+  )
 
-  list(matrices=matrices)
+  list(matrices=matrices, info=info, parTable=parTable)
+}
+
+
+build_model <- function(parTable) {
+  groups <- unique(parTable$group)
+
+  if (all(groups == "")) {
+    models <- list(build_submodel(parTable))
+
+  } else {
+    models <- namedList(n=length(groups), names=groups)
+    
+    for (group in groups) {
+      models[[group]] <- build_submodel(parTable[parTable$group == group, ])
+    }
+  }
+
+  list(models=models, parTable=parTable)
 }

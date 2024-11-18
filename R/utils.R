@@ -61,3 +61,13 @@ getDiagLike <- function(X) {
   dimnames(I) <- dimnames(X)
   I
 }
+
+
+lapplyNamed <- function(X, FUN, ..., names=names(X)) {
+  structure(lapply(X, FUN, ...), names=names)
+}
+
+
+namedList <- function(n=0L, names=NULL) {
+  structure(vector("list", n), names=names)
+}

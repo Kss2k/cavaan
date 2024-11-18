@@ -1,3 +1,52 @@
+cavaanify <- function(syntax, groups=NULL) {
+  tokenizeSyntax(syntax) |> 
+    parseTokens() |> 
+    fixIntercepts() |> 
+    pivotGroups(groups)
+}
+
+
+fixIntercepts <- function(parTable) {
+  isIntercept <- parTable$op == "~" & parTable$rhs == "1"
+  parTable[isIntercept, "rhs"] <- ""
+  parTable[isIntercept, "op"]  <- "~1"
+
+  parTable
+}
+
+
+checkGroupLabels <- function(parTable, groups=NULL) {
+  stopif(is.null(groups) && any(parTable$func == "c"), 
+         "c() function is not allowed in the absence of groups")
+
+  ngroups <- length(groups)
+  subParTable <- parTable[parTable$func == "c", ]
+
+  stopif(!all(countElemsClosure(subParTable$closure) == ngroups),
+         "Number of groups in c() function does not match the number of groups")
+}
+
+
+pivotGroups <- function(parTable, groups=NULL) {
+  checkGroupLabels(parTable, groups) # throws error if group-labels are not valid
+
+  if (is.null(groups))
+    return(cbind(parTable, data.frame(group="")))
+
+  hasGroupLabel <- parTable$func == "c"
+  elemsClosure  <- parseClosures(parTable$closure)
+  parTableLong  <- NULL
+  for (i in seq_along(groups)) {
+    group <- groups[i]
+    subParTable <- cbind(parTable, data.frame(group=group))
+    subParTable[hasGroupLabel, "label"] <- elemsClosure[hasGroupLabel, i]
+    parTableLong <- rbind(parTableLong, subParTable)
+  }
+
+  parTableLong
+}
+
+
 getAVs <- function(parTable) { # AVs = All Variables
   subParTable <- parTable[!parTable$op %in% LARGE_MATH_OPS, ]
   aVs <- unique(c(subParTable$lhs, subParTable$rhs))
