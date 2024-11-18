@@ -1,4 +1,6 @@
-buildParamVec <- function(models, parTable) {
+getDetailedParTable <- function(models, parTable, seed=pi) {
+  set.seed(seed)
+
   groups <- unique(parTable$group)
   groups <- ifelse(all(groups == ""), yes=1, no=groups)
   for (group in groups) {
@@ -8,7 +10,7 @@ buildParamVec <- function(models, parTable) {
     parTable <- getMissingCovariances(parTable, iVs)
   }
 
-  tbl <- NULL
+  parTableY <- NULL
   for (i in seq_len(NROW(parTable))) {
     row <- parTable[i, , drop=FALSE]
 
@@ -20,11 +22,12 @@ buildParamVec <- function(models, parTable) {
       stop2("unrecoginized operator: ", row$op)
     )
 
-    tbl <- rbind(tbl, tbl_r)
+    parTableY <- rbind(parTableY, tbl_r)
   }
 
+  parTableY <- constrainParams(parTableY)
 
-  tbl
+  parTableY
 }
 
 
@@ -56,8 +59,8 @@ buildParamGamma <- function(models, row) {
 
   stopif(nunique(c(length(i), length(j))) != 1, "row and col must be unique")
   
-  data.frame(lhs=lhs, op=op, rhs=rhs, est=0, label=label, row=i, col=j, 
-             free=free, group=group)
+  data.frame(lhs=lhs, op=op, rhs=rhs, est=runif(1), label=label, row=i, col=j, 
+             matrix=1, matrix.label="Gamma", free=free, group=group)
 }
 
 
@@ -77,7 +80,6 @@ buildParamPhi <- function(models, row) {
 
   i     <- which(rownames(G) == r)
   j     <- which(colnames(G) == c)
-  free  <- TRUE
   label <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
 
   stopif(nunique(c(length(i), length(j))) != 1, "row and col must be unique")
@@ -85,13 +87,15 @@ buildParamPhi <- function(models, row) {
   if (j != i) {
     rows <- c(i, j)
     cols <- c(j, i)
+    free <- c(TRUE, FALSE)
   } else {
     rows <- i
     cols <- j
+    free <- TRUE
   }
   
-  data.frame(lhs=lhs, op=op, rhs=rhs, est=0, label=label, row=rows, col=cols, 
-             free=free, group=group)
+  data.frame(lhs=lhs, op=op, rhs=rhs, est=runif(1), label=label, row=rows, col=cols, 
+             matrix=2, matrix.label="Phi", free=free, group=group)
 }
 
 
@@ -106,7 +110,7 @@ buildCustomParam <- function(models, row) {
   group <- row$group
 
   data.frame(lhs=lhs, op=op, rhs=rhs, est=NA, label=label, row=i, col=j, 
-             free=free, group=group)
+             matrix=NA, matrix.label=NA, free=free, group=group)
 }
 
 
@@ -140,6 +144,20 @@ getMissingCovariances <- function(parTable, iVs) {
                           closure="", group=group)
         parTable <- rbind(parTable, row)
       }
+    }
+  }
+
+  parTable
+}
+
+
+constrainParams <- function(parTable, fix.first=TRUE) {
+  lVs <- getLVs(parTable)
+
+  if (fix.first) {
+    for (lV in lVs) {
+      parTable[parTable$lhs == lV, "free"][1] <- FALSE
+      parTable[parTable$lhs == lV, "est"][1]  <- 1
     }
   }
 

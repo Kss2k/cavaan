@@ -52,6 +52,6 @@ build_model <- function(parTable) {
     }
   }
 
-  params <- buildParamVec(models, parTable=parTable)
-  list(models=models, parTable=parTable, params=params)
+  parTable.d <- getDetailedParTable(models, parTable=parTable)
+  list(models=models, parTable.b=parTable, parTable.d=parTable.d)
 }

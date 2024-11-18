@@ -22,7 +22,8 @@ tpb <- '
 
 parTable <- cavaanify(tpb)
 model <- build_model(parTable)
-
+parTable.d <- model$parTable.d
+fillModel(model, params=parTable.d[parTable.d$free, "est"])
 matrices <- model$models[[1]]$matrices
 G     <- matrices$G
 Gamma <- matrices$Gamma
