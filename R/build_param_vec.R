@@ -1,6 +1,8 @@
 getDetailedParTable <- function(models, parTable, seed=pi) {
   set.seed(seed)
 
+  warning("B is not correctly filled, FIX ME!")
+
   groups <- unique(parTable$group)
   groups <- ifelse(all(groups == ""), yes=1, no=groups)
   for (group in groups) {
