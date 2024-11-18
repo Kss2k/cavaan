@@ -71,3 +71,8 @@ lapplyNamed <- function(X, FUN, ..., names=names(X)) {
 namedList <- function(n=0L, names=NULL) {
   structure(vector("list", n), names=names)
 }
+
+
+nunique <- function(x) {
+  length(unique(x))
+}

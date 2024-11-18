@@ -1,4 +1,6 @@
 build_submodel <- function(parTable) {
+  aVs   <- getAVs(parTable)
+  iVs   <- getIVs(parTable)
   etas  <- getEtas(parTable, sorted=TRUE)
   xis   <- getXis(parTable)
   mVYs  <- getMVYs(parTable)
@@ -27,7 +29,9 @@ build_submodel <- function(parTable) {
     etas=etas,
     xis=xis,
     mVYs=mVYs,
-    mVXs=mVXs
+    mVXs=mVXs,
+    aVs=aVs,
+    iVs=iVs
   )
 
   list(matrices=matrices, info=info, parTable=parTable)
@@ -48,5 +52,6 @@ build_model <- function(parTable) {
     }
   }
 
-  list(models=models, parTable=parTable)
+  params <- buildParamVec(models, parTable=parTable)
+  list(models=models, parTable=parTable, params=params)
 }
