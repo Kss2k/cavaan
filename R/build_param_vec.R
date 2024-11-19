@@ -49,7 +49,7 @@ buildParamGammaB <- function(models, row) {
   if (op == "~") {
     r   <- lhs
     c   <- rhs
-    est <- 0
+    est <- stats::runif(1)
     isEta <- rhs %in% Y
   } else if (op == "=~") {
     r     <- rhs

@@ -1,4 +1,4 @@
-sem <- function(syntax, data, group=NULL) {
+sem <- function(syntax, data, group=NULL, start=NULL) {
   data   <- as.data.frame(data)
   
   if (!is.null(group)) {
@@ -18,18 +18,31 @@ sem <- function(syntax, data, group=NULL) {
   oVs      <- getOVs(parTable)
   checkOVsData(oVs, data)
   
-  model <- build_model(parTable, data=data)
+  model      <- build_model(parTable, data=data)
+  parTable.d <- model$parTable.d 
 
-  est <- nlminb(model$start, logLik, model=model)
+  # PUT IN A SEPERATE FUNCTION -------------------------
+  start  <- if (is.null(start)) model$start else start
+  isfree <- parTable.d$free
+  isVar  <- parTable.d$op[isfree] == "~~" & 
+    parTable.d$lhs[isfree] == parTable.d$rhs[isfree]
+  upper  <- rep(Inf, length(start)) 
+  lower  <- ifelse(isVar, yes=0, no=-Inf)
+  est    <- suppressWarnings(nlminb(start, logLik, model=model)) 
+                            #, lower=lower, upper=upper))
   
   model.f <- fillModel(model, est$par)
+  model.f$coef   <- est$par
+  model.f$nlminb <- est
+  # ----------------------------------------------------
+
+  # CLEAN THIS UP! -------------------------------------
   parTable.d <- model.f$parTable.d  
   parTable.d[model.f$parTable.d$free, 'est'] <- est$par
-  parTable.d[parTable.d$matrix.label == "BStar" &
-             parTable.d$op == "~", "est"] <- 
-      - parTable.d[parTable.d$matrix.label == "BStar" &
-                   parTable.d$op == "~", "est"]
+  parTable.d[parTable.d$op == "~", "est"] <- 
+      - parTable.d[parTable.d$op == "~", "est"]
   model.f$parTable.d <- parTable.d
+  # ----------------------------------------------------
   
   class(model.f) <- "cavaan"
   model.f
