@@ -21,7 +21,8 @@ buildGammaEpsilon <- function(etas, mVYs) {
   m <- length(etas)
   p <- length(mVYs)
   Y <- c(etas, mVYs)
-  matrix(0, nrow=m+p, ncol=m+p, dimnames=list(Y, Y))
+  out <- matrix(0, nrow=m+p, ncol=m+p, dimnames=list(Y, Y))
+  getDiagLike(out)
 }
 
 
@@ -53,6 +54,7 @@ buildGamma <- function(etas, xis, mVXs, mVYs) {
                  buildGammaX(etas=etas, mVXs=mVXs, mVYs=mVYs),
                  buildGammaEpsilon(etas=etas, mVYs=mVYs))
 }
+
 
 buildGammaStar <- function(Gamma, IGamma) {
   rbind(Gamma, IGamma)
@@ -95,6 +97,5 @@ buildGx <- function(xis, mVXs, etas, mVYs) {
 buildG <- function(xis, etas, mVXs, mVYs) {
   Gy <- buildGy(etas=etas, mVYs=mVYs)
   Gx <- buildGx(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
-  
   superDiag(Gy, Gx)
 }

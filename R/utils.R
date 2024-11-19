@@ -76,3 +76,9 @@ namedList <- function(n=0L, names=NULL) {
 nunique <- function(x) {
   length(unique(x))
 }
+
+
+sortDfBy <- function(df, x, ...) {
+  x <- as.character(substitute(x))
+  df[order(df[[x]], ...), ]
+}

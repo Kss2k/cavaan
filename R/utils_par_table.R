@@ -30,8 +30,8 @@ checkGroupLabels <- function(parTable, groups=NULL) {
 pivotGroups <- function(parTable, groups=NULL) {
   checkGroupLabels(parTable, groups) # throws error if group-labels are not valid
 
-  if (is.null(groups))
-    return(cbind(parTable, data.frame(group="")))
+  if (is.null(groups) || length(groups) == 1)
+    return(cbind(parTable, data.frame(group=1)))
 
   hasGroupLabel <- parTable$func == "c"
   elemsClosure  <- parseClosures(parTable$closure)
