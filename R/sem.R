@@ -20,5 +20,17 @@ sem <- function(syntax, data, group=NULL) {
   
   model <- build_model(parTable, data=data)
 
-  model
+  est <- nlminb(model$start, logLik, model=model)
+  
+  model.f <- fillModel(model, est$par)
+  parTable.d <- model.f$parTable.d  
+  parTable.d[model.f$parTable.d$free, 'est'] <- est$par
+  parTable.d[parTable.d$matrix.label == "BStar" &
+             parTable.d$op == "~", "est"] <- 
+      - parTable.d[parTable.d$matrix.label == "BStar" &
+                   parTable.d$op == "~", "est"]
+  model.f$parTable.d <- parTable.d
+  
+  class(model.f) <- "cavaan"
+  model.f
 }

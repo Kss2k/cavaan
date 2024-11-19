@@ -16,7 +16,7 @@ logLikMatrices <- function(matrices) {
   S     <- matrices$S
   p     <- matrices$p
   
-  ln(det(Sigma)) + tr(solve(Sigma) %*% S) - ln(S) - p
+  ln(det(Sigma)) + tr(solve(Sigma) %*% S) - ln(det(S)) - p
 }
 
 

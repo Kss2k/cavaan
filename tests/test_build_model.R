@@ -17,17 +17,10 @@ tpb <- '
   BEH ~ INT + PBC 
 '
 
-parTable <- cavaanify(tpb)
-model <- sem(tpb, data=TPB)
-model$start
-start <- parTable.d[parTable.d$free, 'est']
-logLik(model, start)
-est <- nlminb(start, logLik, model=model)
-fit <- fillModel(model, est$par)
+fit <- sem(tpb, data=TPB)
+fit
 
-filled <- fillModel(model, model$start)
-matrices <- filled$models[[1]]$matrices
-matrices$Sigma
+
 tpb <- ' 
 # Outer Model (Based on Hagger et al., 2007)
   ATT =~ att1 + att2 + att3 + att4 + att5

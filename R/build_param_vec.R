@@ -190,6 +190,7 @@ constrainParams <- function(parTable, fix.first=TRUE) {
   labels <- unique(parTable$label)
   for (label in labels) {
     rows <- parTable$label == label
+    if (!any(parTable[rows, "free"])) next
 
     if (NROW(rows) > 1) {
       parTable[rows, "free"]    <- FALSE
