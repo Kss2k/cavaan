@@ -216,5 +216,7 @@ sortParTable <- function(parTable) {
 
 
 getStartingParams <- function(parTable.d) {
-  parTable.d[parTable.d$free, "est"]
+  theta <- parTable.d[parTable.d$free, "est"]
+  names(theta) <- parTable.d[parTable.d$free, "label"]
+  theta
 }

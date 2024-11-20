@@ -28,7 +28,7 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
     parTable.d$lhs[isfree] == parTable.d$rhs[isfree]
   upper  <- rep(Inf, length(start)) 
   lower  <- ifelse(isVar, yes=0, no=-Inf)
-  est    <- suppressWarnings(nlminb(start, logLik, model=model)) 
+  est    <- suppressWarnings(nlminb(start, logLik, model=model, gradient=gradientLogLik)) 
                             #, lower=lower, upper=upper))
   
   model.f <- fillModel(model, est$par)

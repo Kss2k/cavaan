@@ -16,6 +16,7 @@ build_submodel <- function(parTable, data) {
   
   IGamma    <- buildIGamma(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
   BStar     <- buildBStar(A=A, IGamma=IGamma) 
+  BStarInv  <- solve(BStar)
   GammaStar <- buildGammaStar(Gamma=Gamma, IGamma=IGamma)
 
   Sigma <- G %*% BStar %*% GammaStar %*% Phi %*% t(GammaStar) %*% t(BStar) %*% t(G)
@@ -28,6 +29,7 @@ build_submodel <- function(parTable, data) {
     G=G,
     B=B,
     BStar=BStar,
+    BStarInv=BStarInv,
     GammaStar=GammaStar,
     Sigma=Sigma,
     S=S,

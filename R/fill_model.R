@@ -25,40 +25,35 @@ fillModel <- function(model, params, parTable.d=NULL, calc.sigma=TRUE) {
       Gamma     <- matrices$Gamma
       Phi       <- matrices$Phi
       GammaStar <- matrices$GammaStar
-      B         <- matrices$B
       BStar     <- matrices$BStar
       BStarInv  <- solve(BStar)
 
       Sigma <- G %*% BStarInv %*% GammaStar %*% Phi %*% 
         t(GammaStar) %*% t(BStarInv) %*% t(G)
 
-      model$models[[group]]$matrices$Sigma <- Sigma
+      model$models[[group]]$matrices$Sigma    <- Sigma
+      model$models[[group]]$matrices$BStarInv <- BStarInv
     }
   }
   
   model
 }
 
-
 getBaseGradients <- function(models, parTable.d) {
-  model      <- list(models=models)
-  params     <- unique(parTable.d[parTable.d$free, "label"])
+  model      <- getZeroMatrixModel(list(models=models))
+  params     <- parTable.d[parTable.d$free, "label"]
   groups     <- unique(parTable.d[parTable.d$fill, "group"])
-
-  parTable.f      <- parTable.d
-  parTable.f$free <- FALSE
-  parTable.f$fill <- FALSE
 
   gradients <- namedList(n=length(params), names=params)
 
   for (param in params) {
-    parTable.fp <- parTable.f
+    parTable.fp <- parTable.d
 
     rows <- parTable.fp$label == param
     parTable.fp[!rows, "est"] <- 0
     parTable.fp[rows,  "est"] <- 1
-    parTable.fp[rows, "fill"] <- TRUE
-    parTable.fp[rows, "free"] <- TRUE
+    parTable.fp[!rows, "fill"] <- FALSE
+    parTable.fp[!rows, "free"] <- FALSE
 
     theta   <- parTable.fp[parTable.fp$free, "est"]
     
@@ -74,4 +69,16 @@ getBaseGradients <- function(models, parTable.d) {
   }
 
   gradients
+}
+
+
+getZeroMatrixModel <- function(model) {
+  for (group in seq_along(model$models)) {
+    matrices <- model$models[[group]]$matrices
+    for (i in seq_along(matrices)) {
+      model$models[[group]]$matrices[[i]][TRUE] <- 0
+    }
+  }
+
+  model
 }
