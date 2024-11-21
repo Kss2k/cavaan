@@ -4,10 +4,10 @@
 
 // Matrices for a single group in a SEM
 typedef struct {
+  arma::mat *BStar;
   arma::mat *GammaStar;
-  arma::mat *BetaStar;
-  arma::mat *BetaStarInv;
   arma::mat *Phi;
+  arma::mat *BStarInv;
   arma::mat *G;
   arma::mat *S;
   arma::mat *Sigma;
@@ -17,7 +17,7 @@ typedef struct {
 // Model
 typedef struct {
   std::vector<MatricesGroup*> models;
-  Rcpp::NumericVector groups;
+  int ngroups;
   int p;
 } Model;
 
