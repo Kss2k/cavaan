@@ -11,20 +11,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// addOne
-Rcpp::NumericVector addOne(Rcpp::NumericVector x);
-RcppExport SEXP _cavaan_addOne(SEXP xSEXP) {
+// ViewModelCreation
+Rcpp::NumericVector ViewModelCreation(Rcpp::List model);
+RcppExport SEXP _cavaan_ViewModelCreation(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(addOne(x));
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(ViewModelCreation(model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cavaan_addOne", (DL_FUNC) &_cavaan_addOne, 1},
+    {"_cavaan_ViewModelCreation", (DL_FUNC) &_cavaan_ViewModelCreation, 1},
     {NULL, NULL, 0}
 };
 

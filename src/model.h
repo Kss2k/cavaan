@@ -2,11 +2,6 @@
 #define model_h
 
 
-#include <RcppArmadillo.h>
-#include <vector>
-// [[Rcpp::depends(RcppArmadillo)]]
-
-
 // Matrices for a single group in a SEM
 typedef struct {
   arma::mat *GammaStar;
@@ -22,6 +17,7 @@ typedef struct {
 // Model
 typedef struct {
   std::vector<MatricesGroup*> models;
+  Rcpp::NumericVector groups;
   int p;
 } Model;
 

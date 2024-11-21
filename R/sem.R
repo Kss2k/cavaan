@@ -47,3 +47,8 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
   class(model.f) <- "cavaan"
   model.f
 }
+
+
+viewModelCreation <- function(model) {
+  ViewModelCreation(fit)
+}

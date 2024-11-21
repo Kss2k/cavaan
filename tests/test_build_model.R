@@ -19,6 +19,8 @@ tpb <- '
 
 fit <- sem(tpb, data=TPB)
 fit
+ViewModelCreation(fit)
+
 
 
 tpb <- ' 
