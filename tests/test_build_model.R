@@ -19,11 +19,15 @@ tpb <- '
 
 fit <- sem(tpb, data=TPB)
 fit
-ViewModelCreation(fit)
+ViewModelCreation(fit, fit$coef)
+
+theta <- fit$coef
+theta <- runif(length(fit$coef))
+logLikR2Cpp(theta, model=fit)
+logLik(theta, model=fit)
 
 
-
-tpb <- ' 
+fpb <- ' 
 # Outer Model (Based on Hagger et al., 2007)
   ATT =~ att1 + att2 + att3 + att4 + att5
   SN =~ sn1 + sn2

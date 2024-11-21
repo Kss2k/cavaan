@@ -28,8 +28,11 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
     parTable.d$lhs[isfree] == parTable.d$rhs[isfree]
   upper  <- rep(Inf, length(start)) 
   lower  <- ifelse(isVar, yes=0, no=-Inf)
-  est    <- suppressWarnings(nlminb(start, logLik, model=model, gradient=gradientLogLik)) 
-                            #, lower=lower, upper=upper))
+
+  # R
+  # est    <- suppressWarnings(nlminb(start, logLik, model=model, gradient=gradientLogLik)) 
+  # C++
+  est    <- suppressWarnings(nlminb(start, logLikR2Cpp, model=model))
   
   model.f <- fillModel(model, est$par)
   model.f$coef   <- est$par

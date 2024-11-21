@@ -12,19 +12,33 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // ViewModelCreation
-Rcpp::NumericVector ViewModelCreation(Rcpp::List model);
-RcppExport SEXP _cavaan_ViewModelCreation(SEXP modelSEXP) {
+Rcpp::NumericVector ViewModelCreation(Rcpp::List model, arma::vec theta);
+RcppExport SEXP _cavaan_ViewModelCreation(SEXP modelSEXP, SEXP thetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(ViewModelCreation(model));
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(ViewModelCreation(model, theta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logLikR2Cpp
+Rcpp::NumericVector logLikR2Cpp(arma::vec theta, Rcpp::List model);
+RcppExport SEXP _cavaan_logLikR2Cpp(SEXP thetaSEXP, SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(logLikR2Cpp(theta, model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cavaan_ViewModelCreation", (DL_FUNC) &_cavaan_ViewModelCreation, 1},
+    {"_cavaan_ViewModelCreation", (DL_FUNC) &_cavaan_ViewModelCreation, 2},
+    {"_cavaan_logLikR2Cpp", (DL_FUNC) &_cavaan_logLikR2Cpp, 2},
     {NULL, NULL, 0}
 };
 

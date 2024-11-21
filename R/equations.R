@@ -1,4 +1,4 @@
-logLik <- function(model, theta) {
+logLik <- function(theta, model) {
   model.f <- fillModel(model, params=theta, calc.sigma=TRUE)
   logLik  <- 0
   
