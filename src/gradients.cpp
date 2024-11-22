@@ -65,11 +65,11 @@ arma::vec getGradientModel(arma::vec theta, Model *model) {
       DerivBStarInv = -BStarInv * DerivBStar * BStarInv;
 
       DerivSigma = G * (
-        DerivGammaStar * BStarInv      * Phi      * BStarInv.t()      * GammaStar.t() +
-        GammaStar      * DerivBStarInv * Phi      * BStarInv.t()      * GammaStar.t() +
-        GammaStar      * BStarInv      * DerivPhi * BStarInv.t()      * GammaStar.t() +
-        GammaStar      * BStarInv      * Phi      * DerivBStarInv.t() * GammaStar.t() +
-        GammaStar      * BStarInv      * Phi      * BStarInv.t()      * DerivGammaStar.t()
+        DerivBStarInv * GammaStar      * Phi      * GammaStar.t()      * BStarInv.t() +
+        BStarInv      * DerivGammaStar * Phi      * GammaStar.t()      * BStarInv.t() +
+        BStarInv      * GammaStar      * DerivPhi * GammaStar.t()      * BStarInv.t() +
+        BStarInv      * GammaStar      * Phi      * DerivGammaStar.t() * BStarInv.t() +
+        BStarInv      * GammaStar      * Phi      * GammaStar.t()      * DerivBStarInv.t()
           ) * G.t();
      
       grad[t] += arma::trace((SigmaInv - SigmaInv * S * SigmaInv) * DerivSigma);

@@ -100,6 +100,8 @@ Model *createModel(Rcpp::List model) {
 
   Rcpp::List parTable = model["parTable.d"];
   m->parTable = createParTable(parTable);
+  
+  getBaseGradients(m);
 
   return m;
 }
