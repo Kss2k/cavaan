@@ -5,20 +5,46 @@
 
 MatricesGroup *createMatricesGroup(Rcpp::List submodel) {
   Rcpp::List matrices = submodel["matrices"];
-  MatricesGroup *mg = new MatricesGroup();
+  MatricesGroup *matricesGroup = new MatricesGroup();
  
   // Initialize
-  mg->BStar     = new arma::mat(Rcpp::as<arma::mat>(matrices["BStar"]));
-  mg->GammaStar = new arma::mat(Rcpp::as<arma::mat>(matrices["GammaStar"]));
-  mg->Phi       = new arma::mat(Rcpp::as<arma::mat>(matrices["Phi"]));
-  mg->BStarInv  = new arma::mat(Rcpp::as<arma::mat>(matrices["BStarInv"]));
-  mg->G         = new arma::mat(Rcpp::as<arma::mat>(matrices["G"]));
-  mg->S         = new arma::mat(Rcpp::as<arma::mat>(matrices["S"]));
-  mg->Sigma     = new arma::mat(Rcpp::as<arma::mat>(matrices["Sigma"]));
+  matricesGroup->BStar     = new arma::mat(Rcpp::as<arma::mat>(matrices["BStar"]));
+  matricesGroup->GammaStar = new arma::mat(Rcpp::as<arma::mat>(matrices["GammaStar"]));
+  matricesGroup->Phi       = new arma::mat(Rcpp::as<arma::mat>(matrices["Phi"]));
+  matricesGroup->BStarInv  = new arma::mat(Rcpp::as<arma::mat>(matrices["BStarInv"]));
+  matricesGroup->G         = new arma::mat(Rcpp::as<arma::mat>(matrices["G"]));
+  matricesGroup->S         = new arma::mat(Rcpp::as<arma::mat>(matrices["S"]));
+  matricesGroup->Sigma     = new arma::mat(Rcpp::as<arma::mat>(matrices["Sigma"]));
 
-  mg->p =   Rcpp::as<int>(matrices["p"]);
+  matricesGroup->p =   Rcpp::as<int>(matrices["p"]);
 
-  return mg;
+  return matricesGroup;
+}
+
+
+MatricesGroup *copyMatricesGroup(MatricesGroup *matricesGroup, bool fillZero = true) {
+  MatricesGroup *copyMatricesGroup = new MatricesGroup();
+  
+  copyMatricesGroup->BStar     = new arma::mat(*matricesGroup->BStar);
+  copyMatricesGroup->GammaStar = new arma::mat(*matricesGroup->GammaStar);
+  copyMatricesGroup->Phi       = new arma::mat(*matricesGroup->Phi);
+  copyMatricesGroup->BStarInv  = new arma::mat(*matricesGroup->BStarInv);
+  copyMatricesGroup->G         = new arma::mat(*matricesGroup->G);
+  copyMatricesGroup->S         = new arma::mat(*matricesGroup->S);
+  copyMatricesGroup->Sigma     = new arma::mat(*matricesGroup->Sigma);
+
+
+  if (fillZero) {
+    copyMatricesGroup->BStar->fill(0);
+    copyMatricesGroup->GammaStar->fill(0);
+    copyMatricesGroup->Phi->fill(0);
+    copyMatricesGroup->BStarInv->fill(0);
+    copyMatricesGroup->G->fill(0);
+    copyMatricesGroup->S->fill(0);
+    copyMatricesGroup->Sigma->fill(0);
+  }
+
+  return copyMatricesGroup;
 }
 
 
@@ -26,6 +52,16 @@ void reindexToZero(std::vector<int> *x) {
   for (int i = 0; i < (int)(x->size()); i++) {
     (*x)[i] = (*x)[i] - 1;
   }
+}
+
+
+int countFree(std::vector<bool> *free) {
+  int n = 0;
+  for (int i = 0; i < (int)(free->size()); i++) {
+    if (free[0][i]) n++;
+  }
+
+  return n;
 }
 
 
@@ -45,6 +81,8 @@ ParTable *createParTable(Rcpp::List rParTable) {
   reindexToZero(parTable->col);
   reindexToZero(parTable->group);
 
+  parTable->nfree = countFree(parTable->free);
+
   return parTable;
 }
 
@@ -54,10 +92,10 @@ Model *createModel(Rcpp::List model) {
 
   m->ngroups = Rcpp::as<Rcpp::NumericVector>(model["groups"]).length();
 
-  Rcpp::List models = model["models"];
+  Rcpp::List matricesGroups = model["models"];
   for (int i = 0; i < m->ngroups; i++) {
-    MatricesGroup *mg = createMatricesGroup(models[i]);
-    m->models.push_back(mg);
+    MatricesGroup *matricesGroup = createMatricesGroup(matricesGroups[i]);
+    m->matricesGroups.push_back(matricesGroup);
   }
 
   Rcpp::List parTable = model["parTable.d"];
@@ -67,75 +105,75 @@ Model *createModel(Rcpp::List model) {
 }
 
 
-void fillModel(Model *model, arma::vec &theta, bool replace = false,
-               bool calcSigma = true) {
-  ParTable *parTable = model->parTable;
+void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *parTable, 
+    arma::vec &theta, bool calcSigma = true, bool fillConst = true) {
 
+  MatricesGroup *matrices;
   int t = 0, row, col, group;
-  double tp = -999.0; 
-  for (int i = 0; i < parTable->fill->size(); i++) {
-    if (!(*parTable->fill)[i]) continue;
+  double tp;
 
-    if (!(*parTable->continueFromLast)[i] && (*parTable->free)[i]) {
-      tp = theta[t++];
-    } else if (!(*parTable->continueFromLast)[i]) {
-      tp = (*parTable->est)[i];
-    }
+  for (int i = 0; i < (int)(parTable->fill->size()); i++) {
+    if (!parTable->fill[0][i] || (!parTable->continueFromLast[0][i] && 
+        !parTable->free[0][i] && !fillConst)) continue;
+
+    if      (!parTable->continueFromLast[0][i] && parTable->free[0][i]) tp = theta[t++];
+    else if (!parTable->continueFromLast[0][i]) tp = (*parTable->est)[i];
   
-    row = (*parTable->row)[i];
-    col = (*parTable->col)[i];
+    row   = (*parTable->row)[i];
+    col   = (*parTable->col)[i];
     group = (*parTable->group)[i];
 
-    switch ((*parTable->matrix)[i]) {
-      case BETA_STAR: {
-        model->models[group]->BStar->at(row, col) = tp;
-        break;
-      }
-      case GAMMA_STAR: {
-        model->models[group]->GammaStar->at(row, col) = tp;
-        break;
-      }
-      case PHI: {
-        model->models[group]->Phi->at(row, col) = tp;
-        break;
-      }
-      default:
-        Rcpp::stop("Unrecognized matrix index");
+    matrices = matricesGroups[group];
 
+    switch ((*parTable->matrix)[i]) {
+      case BETA_STAR:  {matrices->BStar->at(row, col)     = tp; break;}
+      case GAMMA_STAR: {matrices->GammaStar->at(row, col) = tp; break;}
+      case PHI:        {matrices->Phi->at(row, col)       = tp; break;}
+      default: Rcpp::stop("Unrecognized matrix index");
     }
   } 
-
+  
   if (calcSigma) {
-    MatricesGroup *matrices;
-    arma::mat BStarInv;
-    arma::mat Sigma;
+    arma::mat BStarInv, Sigma;
 
-    for (int i = 0; i < model->ngroups; i++) {
-      matrices = model->models[i];
+    for (int i = 0; i < (int)(matricesGroups.size()); i++) {
+      matrices = matricesGroups[i];
       BStarInv = arma::inv(*matrices->BStar);
       
       delete matrices->BStarInv;
       delete matrices->Sigma;
 
-      Sigma = (*matrices->G) * BStarInv * (*matrices->GammaStar) * 
-        (*matrices->Phi) * (*matrices->GammaStar).t() * BStarInv.t() *
-        (*matrices->G).t();
+      Sigma = matrices->G[0] * BStarInv * matrices->GammaStar[0] * 
+        matrices->Phi[0] * matrices->GammaStar[0].t() * BStarInv.t() *
+        matrices->G[0].t();
 
       matrices->BStarInv = new arma::mat(BStarInv);
       matrices->Sigma = new arma::mat(Sigma);
     } 
   }
+
+}
+
+
+void fillModel(Model *model, arma::vec &theta, bool replace = false,
+               bool calcSigma = true) {
+  fillMatricesGroups(model->matricesGroups, model->parTable, theta, true);
+
+  // replace is not implemented yet!!
 }
 
 
 // [[Rcpp::export]]
-Rcpp::NumericVector ViewModelCreation(Rcpp::List model, arma::vec theta) {
-  Model *m = createModel(model);
+Rcpp::NumericVector ViewModelCreation(Rcpp::List RModel, arma::vec theta) {
+  Model *model = createModel(RModel);
   
-  fillModel(m, theta, false, true);
-  Rcpp::Rcout << *(m->models[0]->Sigma) << '\n';
+  fillModel(model, theta, false, true);
+  Rcpp::Rcout << model->matricesGroups[0]->Sigma[0] << '\n';
+  
+  getBaseGradients(model);
+  Rcpp::Rcout << model->gradientMatricesParams[0]->matricesGroups[0]->GammaStar[0] << '\n';
 
-  return m->ngroups;  
+  return model->ngroups;  
 }
 
 
@@ -156,23 +194,23 @@ Rcpp::NumericVector logLikR2Cpp(arma::vec theta, Rcpp::List model) {
   MatricesGroup* matrices;
 
   for (int i = 0; i < m->ngroups; i++) {
-    matrices = m->models[i];
+    matrices = m->matricesGroups[i];
 
     // Compute log(det(Sigma))
-    arma::log_det(log_det_Sigma, sign_Sigma, *matrices->Sigma);
+    arma::log_det(log_det_Sigma, sign_Sigma, matrices->Sigma[0]);
     if (sign_Sigma <= 0) {
       return Rcpp::NumericVector::create(Rcpp::NumericVector::get_na());  // Return NaN
     }
 
     // Compute log(det(S))
-    arma::log_det(log_det_S, sign_S, *matrices->S);
+    arma::log_det(log_det_S, sign_S, matrices->S[0]);
     if (sign_S <= 0) {
       return Rcpp::NumericVector::create(Rcpp::NumericVector::get_na());  // Return NaN
     }
 
     // Compute trace of solve(Sigma) %*% S
-    Sigma_inv = arma::inv(*matrices->Sigma);
-    trace_value = arma::trace(Sigma_inv * (*matrices->S));
+    Sigma_inv = arma::inv(matrices->Sigma[0]);
+    trace_value = arma::trace(Sigma_inv * matrices->S[0]);
 
     // Accumulate the log-likelihood
     logLik += log_det_Sigma + trace_value - log_det_S - matrices->p;
@@ -181,32 +219,11 @@ Rcpp::NumericVector logLikR2Cpp(arma::vec theta, Rcpp::List model) {
   return Rcpp::NumericVector::create(logLik);  // Return log-likelihood as a single-element vector
 }
 
-// old version
-// double logLikR2Cpp(arma::vec theta, Rcpp::List model) {
-//   Model *m = createModel(model);
-//   fillModel(m, theta, false, true);
-// 
-//   double logLik = 0;
-//   double log_det_Sigma;
-//   double sign_Sigma;
-//   double log_det_S;
-//   double sign_S;
-//   arma::mat Sigma_inv;
-//   double trace_value;
-//  
-//   MatricesGroup *matrices;
-//   for (int i = 0; i < m->ngroups; i++) {
-//     matrices = m->models[i];
-//     
-//     arma::log_det(log_det_Sigma, sign_Sigma, *matrices->Sigma);
-//     arma::log_det(log_det_S, sign_S, *matrices->S);
-//     
-//     Sigma_inv = arma::inv(*matrices->Sigma);
-//     trace_value = arma::trace(Sigma_inv * (*matrices->S));
-//     
-//     logLik += log_det_Sigma + trace_value - log_det_S - matrices->p;
-//   }
-// 
-//   return logLik;
-// }
-// 
+
+// [[Rcpp::export]]
+arma::vec gradLogLikR2Cpp(arma::vec theta, Rcpp::List model) {
+  Model* m = createModel(model);
+  fillModel(m, theta, false, true);
+
+  return getGradientModel(theta, m);
+}

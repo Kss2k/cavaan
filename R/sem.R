@@ -32,7 +32,7 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
   # R
   # est    <- suppressWarnings(nlminb(start, logLik, model=model, gradient=gradientLogLik)) 
   # C++
-  est    <- suppressWarnings(nlminb(start, logLikR2Cpp, model=model))
+  est    <- suppressWarnings(nlminb(start, logLikR2Cpp, model=model, gradient=gradLogLikR2Cpp))
   
   model.f <- fillModel(model, est$par)
   model.f$coef   <- est$par

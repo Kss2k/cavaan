@@ -35,12 +35,20 @@ typedef struct {
   std::vector<bool> *free;
   std::vector<bool> *fill;
   std::vector<bool> *continueFromLast;
+  int nfree;
 } ParTable;
+
+
+// GradientMatricesParam
+typedef struct {
+  std::vector<MatricesGroup*> matricesGroups; // vector with elem for each group
+} GradientMatricesParam;
 
 
 // Model
 typedef struct {
-  std::vector<MatricesGroup*> models;
+  std::vector<MatricesGroup*> matricesGroups;
+  std::vector<GradientMatricesParam*> gradientMatricesParams; // vector with elem for each param
   ParTable *parTable;
   int ngroups;
   int p;
@@ -48,9 +56,14 @@ typedef struct {
 
 
 MatricesGroup *createMatricesGroup(Rcpp::List matrices);
+MatricesGroup *copyMatricesGroup(MatricesGroup *matricesGroup, bool fillZero);
 Model *createModel(Rcpp::List model);
 ParTable *createParTable(Rcpp::List model);
-void fillModel(Model *model, arma::vec theta, bool replace);
-
+void fillModel(Model *model, arma::vec &theta, bool replace, bool calcSigma);
+void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *parTable, 
+    arma::vec &theta, bool calcSigma, bool fillConst);
+int countFree(std::vector<bool> free);
+void getBaseGradients(Model *model);
+arma::vec getGradientModel(arma::vec theta, Model *model);
 
 #endif
