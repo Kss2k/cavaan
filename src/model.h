@@ -70,17 +70,17 @@ MatricesGroup *createMatricesGroup(Rcpp::List matrices);
 MatricesGroup *copyMatricesGroup(MatricesGroup *matricesGroup, bool fillZero);
 Model *createModel(Rcpp::List model);
 ParTable *createParTable(Rcpp::List model);
-void fillModel(Model *model, arma::vec &theta, bool replace, bool calcSigma);
+void fillModel(Model *model, const arma::vec &theta, bool replace, bool calcSigma);
 void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *parTable, 
-    arma::vec &theta, bool calcSigma, bool fillConst);
+    const arma::vec &theta, bool calcSigma, bool fillConst);
 int countFree(std::vector<bool> free);
 
 
 // gradient.cpp
 void getBaseGradients(Model *model);
-arma::vec getGradientModel(arma::vec theta, Model *model);
+arma::vec getGradientModel(const arma::vec &theta, Model *model);
 arma::vec normalize(arma::vec x);
-double getLogLikModel(arma::vec theta, Model *model);
+double getLogLikModel(const arma::vec &theta, Model *model);
 
 
 // optimize.cpp

@@ -108,7 +108,7 @@ Model *createModel(Rcpp::List model) {
 
 
 void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *parTable, 
-    arma::vec &theta, bool calcSigma = true, bool fillConst = true) {
+    const arma::vec &theta, bool calcSigma = true, bool fillConst = true) {
 
   MatricesGroup *matrices;
   int t = 0, row, col, group;
@@ -154,7 +154,7 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
 }
 
 
-void fillModel(Model *model, arma::vec &theta, bool replace = false,
+void fillModel(Model *model, const arma::vec &theta, bool replace = false,
                bool calcSigma = true) {
   fillMatricesGroups(model->matricesGroups, model->parTable, theta, true);
 
@@ -201,7 +201,7 @@ arma::vec gradLogLikCpp(arma::vec theta, SEXP xptr) {
 
 
 // [[Rcpp::export]]
-Rcpp::NumericVector logLikCpp(arma::vec theta, SEXP xptr) {
+Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
   Rcpp::XPtr<Model> model(xptr);
   fillModel(model, theta, false, true);
 

@@ -17,6 +17,7 @@ tpb <- '
   BEH ~ INT + PBC 
 '
 
+fit2 <- lavaan::sem(tpb, TPB)
 fit <- sem(tpb, data=TPB)
 fit
 ViewModelCreation(fit, fit$coef)

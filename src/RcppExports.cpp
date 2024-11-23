@@ -59,12 +59,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // logLikCpp
-Rcpp::NumericVector logLikCpp(arma::vec theta, SEXP xptr);
+Rcpp::NumericVector logLikCpp(const arma::vec& theta, SEXP xptr);
 RcppExport SEXP _cavaan_logLikCpp(SEXP thetaSEXP, SEXP xptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
     rcpp_result_gen = Rcpp::wrap(logLikCpp(theta, xptr));
     return rcpp_result_gen;
