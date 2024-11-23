@@ -23,35 +23,60 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// logLikR2Cpp
-Rcpp::NumericVector logLikR2Cpp(arma::vec theta, Rcpp::List model);
-RcppExport SEXP _cavaan_logLikR2Cpp(SEXP thetaSEXP, SEXP modelSEXP) {
+// createRcppModel
+RcppExport SEXP createRcppModel(Rcpp::List RModel);
+RcppExport SEXP _cavaan_createRcppModel(SEXP RModelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(logLikR2Cpp(theta, model));
+    Rcpp::traits::input_parameter< Rcpp::List >::type RModel(RModelSEXP);
+    rcpp_result_gen = Rcpp::wrap(createRcppModel(RModel));
     return rcpp_result_gen;
 END_RCPP
 }
-// gradLogLikR2Cpp
-arma::vec gradLogLikR2Cpp(arma::vec theta, Rcpp::List model);
-RcppExport SEXP _cavaan_gradLogLikR2Cpp(SEXP thetaSEXP, SEXP modelSEXP) {
+// fillRcppModel
+RcppExport SEXP fillRcppModel(SEXP xptr, arma::vec theta);
+RcppExport SEXP _cavaan_fillRcppModel(SEXP xptrSEXP, SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    rcpp_result_gen = Rcpp::wrap(fillRcppModel(xptr, theta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gradLogLikCpp
+arma::vec gradLogLikCpp(arma::vec theta, SEXP xptr);
+RcppExport SEXP _cavaan_gradLogLikCpp(SEXP thetaSEXP, SEXP xptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(gradLogLikR2Cpp(theta, model));
+    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(gradLogLikCpp(theta, xptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// logLikCpp
+Rcpp::NumericVector logLikCpp(arma::vec theta, SEXP xptr);
+RcppExport SEXP _cavaan_logLikCpp(SEXP thetaSEXP, SEXP xptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(logLikCpp(theta, xptr));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cavaan_ViewModelCreation", (DL_FUNC) &_cavaan_ViewModelCreation, 2},
-    {"_cavaan_logLikR2Cpp", (DL_FUNC) &_cavaan_logLikR2Cpp, 2},
-    {"_cavaan_gradLogLikR2Cpp", (DL_FUNC) &_cavaan_gradLogLikR2Cpp, 2},
+    {"_cavaan_createRcppModel", (DL_FUNC) &_cavaan_createRcppModel, 1},
+    {"_cavaan_fillRcppModel", (DL_FUNC) &_cavaan_fillRcppModel, 2},
+    {"_cavaan_gradLogLikCpp", (DL_FUNC) &_cavaan_gradLogLikCpp, 2},
+    {"_cavaan_logLikCpp", (DL_FUNC) &_cavaan_logLikCpp, 2},
     {NULL, NULL, 0}
 };
 

@@ -29,19 +29,20 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
   upper  <- rep(Inf, length(start)) 
   lower  <- ifelse(isVar, yes=0, no=-Inf)
 
-  # R
-  # est    <- suppressWarnings(nlminb(start, logLik, model=model, gradient=gradientLogLik)) 
-  # C++
-  est    <- suppressWarnings(nlminb(start, logLikR2Cpp, model=model, gradient=gradLogLikR2Cpp))
+  RcppModel <- createRcppModel(model)
+  est <- suppressWarnings(nlminb(start, objective=logLikCpp, gradient=gradLogLikCpp, xptr=RcppModel))
   
-  model.f <- fillModel(model, est$par)
-  model.f$coef   <- est$par
+  # R and C++/R
+  par <- est$par
+  model.f <- fillModel(model, par)
+  model.f$coef   <- par
   model.f$nlminb <- est
+
   # ----------------------------------------------------
 
   # CLEAN THIS UP! -------------------------------------
   parTable.d <- model.f$parTable.d  
-  parTable.d[model.f$parTable.d$free, 'est'] <- est$par
+  parTable.d[model.f$parTable.d$free, 'est'] <- par
   parTable.d[parTable.d$op == "~", "est"] <- 
       - parTable.d[parTable.d$op == "~", "est"]
   model.f$parTable.d <- parTable.d

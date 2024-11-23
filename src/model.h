@@ -45,6 +45,15 @@ typedef struct {
 } GradientMatricesParam;
 
 
+typedef struct {
+  int iterations;
+  int maxIterations;
+  double threshold;
+  bool convergence;
+  arma::vec par;
+} OptimizerInfo;
+
+
 // Model
 typedef struct {
   std::vector<MatricesGroup*> matricesGroups;
@@ -52,9 +61,11 @@ typedef struct {
   ParTable *parTable;
   int ngroups;
   int p;
+  OptimizerInfo optimizerInfo;
 } Model;
 
 
+// model.cpp
 MatricesGroup *createMatricesGroup(Rcpp::List matrices);
 MatricesGroup *copyMatricesGroup(MatricesGroup *matricesGroup, bool fillZero);
 Model *createModel(Rcpp::List model);
@@ -63,7 +74,19 @@ void fillModel(Model *model, arma::vec &theta, bool replace, bool calcSigma);
 void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *parTable, 
     arma::vec &theta, bool calcSigma, bool fillConst);
 int countFree(std::vector<bool> free);
+
+
+// gradient.cpp
 void getBaseGradients(Model *model);
 arma::vec getGradientModel(arma::vec theta, Model *model);
+arma::vec normalize(arma::vec x);
+double getLogLikModel(arma::vec theta, Model *model);
+
+
+// optimize.cpp
+arma::vec optim(arma::vec theta, Model* model, double (*objective)(arma::vec, Model*),
+    arma::vec (*gradient)(arma::vec, Model*));
+arma::vec optimBFGS(arma::vec theta, Model* model, double (*objective)(arma::vec, Model*),
+    arma::vec (*gradient)(arma::vec, Model*));
 
 #endif

@@ -1,4 +1,6 @@
 #include "model.h"
+#include <cmath>
+#include <stdexcept>
 
 
 void getBaseGradients(Model *model) {
@@ -37,9 +39,13 @@ arma::vec getGradientModel(arma::vec theta, Model *model) {
 
   arma::vec grad = arma::vec(npar).fill(0);
 
+  bool okSigmaInv;
   std::vector<arma::mat> SigmaInvs;
   for (int g = 0; g < ngroups; g++) {
-    SigmaInvs.push_back(arma::inv(model->matricesGroups[g]->Sigma[0]));
+    Sigma = model->matricesGroups[g]->Sigma[0];
+    okSigmaInv = arma::inv(SigmaInv, Sigma);
+    if (!okSigmaInv) Rcpp::stop("Sigma not invertible");
+    SigmaInvs.push_back(SigmaInv);
   }
 
   for (int t = 0; t < npar; t++) {
@@ -77,4 +83,9 @@ arma::vec getGradientModel(arma::vec theta, Model *model) {
   }
 
   return grad;
+}
+
+
+arma::vec normalize(arma::vec x) {
+  return x / std::sqrt(arma::dot(x, x));
 }

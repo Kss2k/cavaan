@@ -5,11 +5,19 @@ ViewModelCreation <- function(RModel, theta) {
     .Call(`_cavaan_ViewModelCreation`, RModel, theta)
 }
 
-logLikR2Cpp <- function(theta, model) {
-    .Call(`_cavaan_logLikR2Cpp`, theta, model)
+createRcppModel <- function(RModel) {
+    .Call(`_cavaan_createRcppModel`, RModel)
 }
 
-gradLogLikR2Cpp <- function(theta, model) {
-    .Call(`_cavaan_gradLogLikR2Cpp`, theta, model)
+fillRcppModel <- function(xptr, theta) {
+    .Call(`_cavaan_fillRcppModel`, xptr, theta)
+}
+
+gradLogLikCpp <- function(theta, xptr) {
+    .Call(`_cavaan_gradLogLikCpp`, theta, xptr)
+}
+
+logLikCpp <- function(theta, xptr) {
+    .Call(`_cavaan_logLikCpp`, theta, xptr)
 }
 
