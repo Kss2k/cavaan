@@ -36,7 +36,7 @@ arma::vec getGradientModel(arma::vec theta, Model* model) {
   // Precompute Sigma inverses for all groups
   std::vector<arma::mat> SigmaInvs(ngroups);
   for (int g = 0; g < ngroups; g++) {
-    arma::mat Sigma = model->matricesGroups[g]->Sigma[0];
+    arma::mat Sigma = model->matricesGroups[g]->Sigma;
     if (!arma::inv(SigmaInvs[g], Sigma)) {
       Rcpp::stop("Sigma not invertible");
     }
@@ -52,18 +52,18 @@ arma::vec getGradientModel(arma::vec theta, Model* model) {
       MatricesGroup* matricesGroup = model->matricesGroups[g];
 
       // Load derivative matrices
-      arma::mat DerivGammaStar = gradientMatricesParamGroup->GammaStar[0];
-      arma::mat DerivBStar = gradientMatricesParamGroup->BStar[0];
-      arma::mat DerivPhi = gradientMatricesParamGroup->Phi[0];
+      arma::mat DerivGammaStar = gradientMatricesParamGroup->GammaStar;
+      arma::mat DerivBStar = gradientMatricesParamGroup->BStar;
+      arma::mat DerivPhi = gradientMatricesParamGroup->Phi;
 
       // Load base matrices
-      arma::mat G = matricesGroup->G[0];
-      arma::mat S = matricesGroup->S[0];
-      arma::mat Phi = matricesGroup->Phi[0];
-      arma::mat GammaStar = matricesGroup->GammaStar[0];
-      arma::mat BStar = matricesGroup->BStar[0];
-      arma::mat BStarInv = matricesGroup->BStarInv[0];
-      arma::mat Sigma = matricesGroup->Sigma[0];
+      arma::mat G = matricesGroup->G;
+      arma::mat S = matricesGroup->S;
+      arma::mat Phi = matricesGroup->Phi;
+      arma::mat GammaStar = matricesGroup->GammaStar;
+      arma::mat BStar = matricesGroup->BStar;
+      arma::mat BStarInv = matricesGroup->BStarInv;
+      arma::mat Sigma = matricesGroup->Sigma;
       arma::mat SigmaInv = SigmaInvs[g];
 
       // Precompute reusable terms

@@ -14,27 +14,27 @@
 
 // Matrices for a single group in a SEM
 typedef struct {
-  arma::mat *BStar;
-  arma::mat *GammaStar;
-  arma::mat *Phi;
-  arma::mat *BStarInv;
-  arma::mat *G;
-  arma::mat *S;
-  arma::mat *Sigma;
+  arma::mat BStar;
+  arma::mat GammaStar;
+  arma::mat Phi;
+  arma::mat BStarInv;
+  arma::mat G;
+  arma::mat S;
+  arma::mat Sigma;
   int p;
 } MatricesGroup;
 
 
 // ParTable
 typedef struct {
-  arma::vec *est;
-  std::vector<int>  *matrix;
-  std::vector<int>  *group;
-  std::vector<int>  *row;
-  std::vector<int>  *col;
-  std::vector<bool> *free;
-  std::vector<bool> *fill;
-  std::vector<bool> *continueFromLast;
+  arma::vec est;
+  std::vector<int>  matrix;
+  std::vector<int>  group;
+  std::vector<int>  row;
+  std::vector<int>  col;
+  std::vector<bool> free;
+  std::vector<bool> fill;
+  std::vector<bool> continueFromLast;
   int nfree;
 } ParTable;
 

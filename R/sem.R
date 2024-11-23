@@ -31,6 +31,8 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
 
   RcppModel <- createRcppModel(model)
   est <- suppressWarnings(nlminb(start, objective=logLikCpp, gradient=gradLogLikCpp, xptr=RcppModel))
+  # somehow faster with numerical gradient...
+  # est <- suppressWarnings(nlminb(start, objective=logLikCpp, xptr=RcppModel))
   
   # R and C++/R
   par <- est$par

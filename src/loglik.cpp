@@ -15,8 +15,8 @@ double getLogLikModel(arma::vec theta, Model *model) {
   for (int i = 0; i < model->ngroups; i++) {
     matrices = model->matricesGroups[i];
 
-    S     = matrices->S[0];
-    Sigma = matrices->Sigma[0];
+    S     = matrices->S;
+    Sigma = matrices->Sigma;
     p     = matrices->p;
 
     okLDS      = arma::log_det(valLDS, signLDS, S);
