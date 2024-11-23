@@ -34,7 +34,6 @@ arma::vec getGradientModel(const arma::vec& theta, Model* model) {
 
     arma::vec grad(npar, arma::fill::zeros);
 
-    // Precompute Sigma inverses for all groups
     std::vector<arma::mat> SigmaInvs(ngroups);
     for (int g = 0; g < ngroups; ++g) {
         const arma::mat& Sigma = model->matricesGroups[g]->Sigma;
@@ -43,21 +42,17 @@ arma::vec getGradientModel(const arma::vec& theta, Model* model) {
         }
     }
 
-    // Iterate over free parameters
     for (int t = 0; t < npar; ++t) {
         GradientMatricesParam* gradientMatricesParam = model->gradientMatricesParams[t];
 
-        // Iterate over groups
         for (int g = 0; g < ngroups; ++g) {
             MatricesGroup* gradientMatricesParamGroup = gradientMatricesParam->matricesGroups[g];
             MatricesGroup* matricesGroup = model->matricesGroups[g];
 
-            // Load derivative matrices using references to avoid copies
             const arma::mat& DerivGammaStar = gradientMatricesParamGroup->GammaStar;
             const arma::mat& DerivBStar = gradientMatricesParamGroup->BStar;
             const arma::mat& DerivPhi = gradientMatricesParamGroup->Phi;
 
-            // Load base matrices using references
             const arma::mat& G = matricesGroup->G;
             const arma::mat& S = matricesGroup->S;
             const arma::mat& Phi = matricesGroup->Phi;
@@ -66,13 +61,11 @@ arma::vec getGradientModel(const arma::vec& theta, Model* model) {
             const arma::mat& BStarInv = matricesGroup->BStarInv;
             const arma::mat& SigmaInv = SigmaInvs[g];
 
-            // Precompute reusable terms
             const arma::mat BStarInv_T = BStarInv.t();
             const arma::mat GammaStar_T = GammaStar.t();
             const arma::mat DerivGammaStar_T = DerivGammaStar.t();
             const arma::mat DerivBStarInv = -BStarInv * DerivBStar * BStarInv;
 
-            // Compute Derivative of Sigma more efficiently
             arma::mat temp = BStarInv * GammaStar;
             arma::mat temp_T = temp.t();
             arma::mat DerivSigmaInner = (
@@ -84,7 +77,6 @@ arma::vec getGradientModel(const arma::vec& theta, Model* model) {
             );
             arma::mat DerivSigma = G * DerivSigmaInner * G.t();
 
-            // Update gradient using element-wise multiplication for efficiency
             arma::mat diff = SigmaInv - SigmaInv * S * SigmaInv;
             grad[t] += arma::accu(diff % DerivSigma);
         }
