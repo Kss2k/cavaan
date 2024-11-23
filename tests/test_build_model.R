@@ -22,6 +22,7 @@ fit <- sem(tpb, data=TPB)
 fit
 ViewModelCreation(fit, fit$coef)
 
+# Error: matrix multiplication: incompatible matrix dimensions: 15x37 and 15x15
 theta <- fit$coef
 theta <- runif(length(fit$coef))
 logLikR2Cpp(theta, model=fit)

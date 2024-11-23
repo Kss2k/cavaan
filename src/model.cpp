@@ -196,7 +196,7 @@ RcppExport SEXP fillRcppModel(SEXP xptr, arma::vec theta) {
 // [[Rcpp::export]]
 arma::vec gradLogLikCpp(arma::vec theta, SEXP xptr) {
   Rcpp::XPtr<Model> model(xptr);
-  return getGradientModel(theta, model);
+  return getGradientModelSimple(theta, model);
 }
 
 
