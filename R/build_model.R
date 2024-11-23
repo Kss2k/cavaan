@@ -66,9 +66,8 @@ build_model <- function(parTable, data) {
   }
 
   parTable.d    <- getDetailedParTable(models, parTable=parTable)
-  baseGradients <- getBaseGradients(models, parTable.d=parTable.d)
   start         <- getStartingParams(parTable.d)
 
   list(models=models, parTable.b=parTable, parTable.d=parTable.d,
-       baseGradients=baseGradients, data=data, groups=groups, start=start)
+       data=data, groups=groups, start=start)
 }

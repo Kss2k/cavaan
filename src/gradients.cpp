@@ -26,59 +26,65 @@ void getBaseGradients(Model *model) {
 }
 
 
-arma::vec getGradientModel(arma::vec theta, Model *model) {
+arma::vec getGradientModel(arma::vec theta, Model* model) {
   fillModel(model, theta, false, true);
-  
-  int npar = model->parTable->nfree, ngroups = model->ngroups;
 
-  GradientMatricesParam *gradientMatricesParam;
-  MatricesGroup *gradientMatricesParamGroup;
- 
-  arma::mat DerivSigma, DerivGammaStar, DerivBStar, DerivPhi, 
-    DerivBStarInv, G, Phi, GammaStar, BStar, BStarInv, Sigma, SigmaInv, S;
+  int npar = model->parTable->nfree, ngroups = model->ngroups;
 
   arma::vec grad = arma::vec(npar).fill(0);
 
-  bool okSigmaInv;
-  std::vector<arma::mat> SigmaInvs;
+  // Precompute Sigma inverses for all groups
+  std::vector<arma::mat> SigmaInvs(ngroups);
   for (int g = 0; g < ngroups; g++) {
-    Sigma = model->matricesGroups[g]->Sigma[0];
-    okSigmaInv = arma::inv(SigmaInv, Sigma);
-    if (!okSigmaInv) Rcpp::stop("Sigma not invertible");
-    SigmaInvs.push_back(SigmaInv);
+    arma::mat Sigma = model->matricesGroups[g]->Sigma[0];
+    if (!arma::inv(SigmaInvs[g], Sigma)) {
+      Rcpp::stop("Sigma not invertible");
+    }
   }
 
+  // Iterate over free parameters
   for (int t = 0; t < npar; t++) {
-    gradientMatricesParam = model->gradientMatricesParams[t];
+    GradientMatricesParam* gradientMatricesParam = model->gradientMatricesParams[t];
 
+    // Iterate over groups
     for (int g = 0; g < ngroups; g++) {
-      gradientMatricesParamGroup = gradientMatricesParam->matricesGroups[g];
-      
-      DerivGammaStar = gradientMatricesParamGroup->GammaStar[0];
-      DerivBStar     = gradientMatricesParamGroup->BStar[0];
-      DerivPhi       = gradientMatricesParamGroup->Phi[0];
+      MatricesGroup* gradientMatricesParamGroup = gradientMatricesParam->matricesGroups[g];
+      MatricesGroup* matricesGroup = model->matricesGroups[g];
 
-      G         = model->matricesGroups[g]->G[0];
-      S         = model->matricesGroups[g]->S[0];
-      Phi       = model->matricesGroups[g]->Phi[0];
-      GammaStar = model->matricesGroups[g]->GammaStar[0];
-      BStar     = model->matricesGroups[g]->BStar[0];
-      BStarInv  = model->matricesGroups[g]->BStarInv[0];
-      Sigma     = model->matricesGroups[g]->Sigma[0];
+      // Load derivative matrices
+      arma::mat DerivGammaStar = gradientMatricesParamGroup->GammaStar[0];
+      arma::mat DerivBStar = gradientMatricesParamGroup->BStar[0];
+      arma::mat DerivPhi = gradientMatricesParamGroup->Phi[0];
 
-      SigmaInv  = SigmaInvs[g];
+      // Load base matrices
+      arma::mat G = matricesGroup->G[0];
+      arma::mat S = matricesGroup->S[0];
+      arma::mat Phi = matricesGroup->Phi[0];
+      arma::mat GammaStar = matricesGroup->GammaStar[0];
+      arma::mat BStar = matricesGroup->BStar[0];
+      arma::mat BStarInv = matricesGroup->BStarInv[0];
+      arma::mat Sigma = matricesGroup->Sigma[0];
+      arma::mat SigmaInv = SigmaInvs[g];
 
-      DerivBStarInv = -BStarInv * DerivBStar * BStarInv;
+      // Precompute reusable terms
+      arma::mat BStarInv_T = BStarInv.t();
+      arma::mat GammaStar_T = GammaStar.t();
 
-      DerivSigma = G * (
-        DerivBStarInv * GammaStar      * Phi      * GammaStar.t()      * BStarInv.t() +
-        BStarInv      * DerivGammaStar * Phi      * GammaStar.t()      * BStarInv.t() +
-        BStarInv      * GammaStar      * DerivPhi * GammaStar.t()      * BStarInv.t() +
-        BStarInv      * GammaStar      * Phi      * DerivGammaStar.t() * BStarInv.t() +
-        BStarInv      * GammaStar      * Phi      * GammaStar.t()      * DerivBStarInv.t()
-          ) * G.t();
-     
-      grad[t] += arma::trace((SigmaInv - SigmaInv * S * SigmaInv) * DerivSigma);
+      // Derivative of BStarInv
+      arma::mat DerivBStarInv = -BStarInv * DerivBStar * BStarInv;
+
+      // Derivative of Sigma
+      arma::mat DerivSigma = G * (
+          DerivBStarInv * GammaStar * Phi * GammaStar_T * BStarInv_T +
+          BStarInv * DerivGammaStar * Phi * GammaStar_T * BStarInv_T +
+          BStarInv * GammaStar * DerivPhi * GammaStar_T * BStarInv_T +
+          BStarInv * GammaStar * Phi * DerivGammaStar.t() * BStarInv_T +
+          BStarInv * GammaStar * Phi * GammaStar_T * DerivBStarInv.t()
+      ) * G.t();
+
+      // Update gradient
+      arma::mat diff = SigmaInv - SigmaInv * S * SigmaInv;
+      grad[t] += arma::trace(diff * DerivSigma);
     }
   }
 
