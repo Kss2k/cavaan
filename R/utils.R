@@ -3,6 +3,12 @@ warning2 <- function(...) {
 }
 
 
+warnReturnNULL <- function(...) {
+  warning2(...)
+  NULL
+}
+
+
 stop2 <- function(...) {
   stop(..., call. = FALSE)
 }

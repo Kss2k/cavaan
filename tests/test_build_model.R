@@ -9,18 +9,13 @@ tpb <- '
   BEH =~ b1 + b2
 
 # Inner Model (Based on Steinmetz et al., 2011)
-  # Covariances
-  ATT ~~ SN + PBC
-  PBC ~~ SN 
   # Causal Relationsships
   INT ~ a * ATT + b * SN + c * PBC
   BEH ~ INT + PBC 
-
-  custom := sin(a) + cos(b) * log(c)
 '
 
 # Create an Expression object
-expr_ptr <- createExpression("sin(a) + cos(b) * log(c)")
+getVariablesEquation("sin(a) + cos(b) * log(c)")
 
 # Evaluate the expression with variables
 result <- evaluateExpr(expr_ptr, list(a = 0.5, b = 0.8, c = 2.0, d=-999))

@@ -70,6 +70,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getVariablesEquation
+Rcpp::StringVector getVariablesEquation(std::string expr);
+RcppExport SEXP _cavaan_getVariablesEquation(SEXP exprSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type expr(exprSEXP);
+    rcpp_result_gen = Rcpp::wrap(getVariablesEquation(expr));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cavaan_ViewModelCreation", (DL_FUNC) &_cavaan_ViewModelCreation, 2},
@@ -77,6 +88,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cavaan_fillRcppModel", (DL_FUNC) &_cavaan_fillRcppModel, 2},
     {"_cavaan_gradLogLikCpp", (DL_FUNC) &_cavaan_gradLogLikCpp, 2},
     {"_cavaan_logLikCpp", (DL_FUNC) &_cavaan_logLikCpp, 2},
+    {"_cavaan_getVariablesEquation", (DL_FUNC) &_cavaan_getVariablesEquation, 1},
     {NULL, NULL, 0}
 };
 

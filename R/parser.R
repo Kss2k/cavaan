@@ -123,7 +123,7 @@ parseTokens <- function(tokens) {
         pos      <- "lhs"
         state    <- "open"
         current  <- NULL 
-          
+         
       } else {
         mathExpr <- paste0(current[[pos]], ifelse(token == "\n", yes="", no=token))
         current[[pos]] <- mathExpr
@@ -135,7 +135,7 @@ parseTokens <- function(tokens) {
       else if (tokenT == "numeric") constMod <- token
       skipNext <- TRUE
 
-    } else if (!is.null(nextToken) && !is.null(nextToken2T) && 
+    } else if (tokenT == "name" && !is.null(nextToken) && !is.null(nextToken2T) && 
                nextTokenT == "closure" && nextToken2 == "*") {
       funcMod    <- token
       closureMod <- nextToken

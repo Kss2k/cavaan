@@ -20,6 +20,7 @@ getDetailedParTable <- function(models, parTable, seed=pi) {
       `~~` = buildParamPhi(models, row),
       `:=` = buildCustomParam(models, row),
       `==` = buildCustomParam(models, row),
+      `~1` = warnReturnNULL("~1 not supported yet, ignoring"),
       stop2("unrecoginized operator: ", row$op)
     )
 
@@ -48,14 +49,14 @@ buildParamGammaB <- function(models, row) {
   Y     <- c(etas, mVYs)
 
   if (op == "~") {
-    r   <- lhs
-    c   <- rhs
-    est <- stats::runif(1)
+    r     <- lhs
+    c     <- rhs
+    est   <- ifelse(row$const == "", yes=stats::runif(1), no=as.numeric(row$const))
     isEta <- rhs %in% Y
   } else if (op == "=~") {
     r     <- rhs
     c     <- lhs
-    est   <- 1
+    est   <- ifelse(row$const == "", yes=stats::runif(1), no=as.numeric(row$const))
     isEta <- lhs %in% etas
   } else {
     stop2("unrecoginized operator: ", row$op)
@@ -64,7 +65,7 @@ buildParamGammaB <- function(models, row) {
   M        <- if (isEta) B else G
   i        <- which(rownames(M) == r)
   j        <- which(colnames(M) == c)
-  free     <- TRUE
+  free     <- ifelse(row$const == "", yes=TRUE, no=FALSE)
   continue <- FALSE
   fill     <- TRUE
   label    <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
@@ -106,15 +107,17 @@ buildParamPhi <- function(models, row) {
   if (j != i) {
     rows     <- c(i, j)
     cols     <- c(j, i)
-    free     <- c(TRUE, FALSE)
+    free     <- ifelse(row$const == "", yes=TRUE, no=FALSE)
+    free     <- c(free, FALSE)
     continue <- c(FALSE, TRUE)
-    est      <- c(0, 0)
+    est      <- ifelse(row$const == "", yes=0, no=as.numeric(row$const))
+    est      <- c(est, est)
   } else {
     rows     <- i
     cols     <- j
-    free     <- TRUE
+    free     <- ifelse(row$const == "", yes=TRUE, no=FALSE)
     continue <- FALSE
-    est      <- 1
+    est      <- ifelse(row$const == "", yes=stats::runif(1), no=as.numeric(row$const))
   }
   
   isEquation <- FALSE
@@ -215,10 +218,36 @@ validRowColMatch <- function(i, j) {
 
 
 sortParTable <- function(parTable) {
-  sortDfBy(parTable, x=free, decreasing=TRUE) |>
+  partiallySorted <- sortDfBy(parTable, x=free, decreasing=TRUE) |>
     sortDfBy(x=continue, decreasing=FALSE) |>
-    sortDfBy(x=isEquation, decreasing=TRUE) |>
-    sortDfBy(x=label, decreasing=FALSE)
+    sortDfBy(x=isEquation, decreasing=TRUE)
+
+  equations <- parTable[parTable$op %in% LARGE_MATH_OPS, , drop=FALSE]
+  unsortedLabels <- unique(c(equations$lhs, parTable$label))
+
+  parTableEqLabels <- NULL
+  for (i in seq_len(NROW(equations))) {
+    lhs <- equations[i, "lhs"]
+    rhs <- getVariablesEquation(equations[i, "rhs"])
+
+    if (!length(rhs)) next
+    row <- data.frame(lhs=lhs, op="~", rhs=rhs, label=NA)
+    parTableEqLabels <- rbind(parTableEqLabels, row)
+  }
+
+  depEqLabels   <- getSortedDVs(parTableEqLabels)
+  indepEqLabels <- getIVs(parTableEqLabels)
+
+  sortedEqLabels <- c(indepEqLabels, depEqLabels) 
+  sortedLabels <- unique(c(sortedEqLabels, unsortedLabels))
+
+  sortedParTable <- NULL
+  for (label in sortedLabels) {
+    row <-  partiallySorted[partiallySorted$label == label, , drop=FALSE]
+    sortedParTable <- rbind(sortedParTable, row)
+  }
+
+  sortedParTable
 }
 
 

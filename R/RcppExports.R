@@ -21,3 +21,7 @@ logLikCpp <- function(theta, xptr) {
     .Call(`_cavaan_logLikCpp`, theta, xptr)
 }
 
+getVariablesEquation <- function(expr) {
+    .Call(`_cavaan_getVariablesEquation`, expr)
+}
+

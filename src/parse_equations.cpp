@@ -1,9 +1,17 @@
 #include "cavaan.h"
+#include <cctype>
+
 
 Expression::Expression(const std::string& expr) {
   tokenize(expr);
   parseToRPN();
 }
+
+
+bool isalpha_(char x) {
+  return isalpha(x) || x == '_';
+}
+
 
 void Expression::tokenize(const std::string& expr) {
   size_t i = 0;
@@ -15,10 +23,10 @@ void Expression::tokenize(const std::string& expr) {
       size_t start = i;
       while (i < expr.length() && (isdigit(expr[i]) || expr[i] == '.')) ++i;
       tokens.push_back({ NUMBER, expr.substr(start, i - start) });
-    } else if (isalpha(expr[i])) {
+    } else if (isalpha_(expr[i])) {
       // Parse identifier (variable or function)
       size_t start = i;
-      while (i < expr.length() && isalpha(expr[i])) ++i;
+      while (i < expr.length() && (isalpha_(expr[i]) || isdigit(expr[i]))) ++i;
       std::string ident = expr.substr(start, i - start);
       if (functions.find(ident) != functions.end()) {
         tokens.push_back({ FUNCTION, ident });
@@ -41,6 +49,7 @@ void Expression::tokenize(const std::string& expr) {
   }
 }
 
+
 int Expression::getPrecedence(const std::string& op) {
   if (op == "+" || op == "-")
     return 1;
@@ -52,9 +61,11 @@ int Expression::getPrecedence(const std::string& op) {
     return 0;
 }
 
+
 bool Expression::isRightAssociative(const std::string& op) {
   return op == "^";
 }
+
 
 void Expression::parseToRPN() {
   std::stack<Token> opStack;
@@ -102,6 +113,7 @@ void Expression::parseToRPN() {
     opStack.pop();
   }
 }
+
 
 double Expression::evaluateRPN(const std::map<std::string, double>& variables) {
   std::stack<double> evalStack;
@@ -158,9 +170,11 @@ double Expression::evaluateRPN(const std::map<std::string, double>& variables) {
   return evalStack.top();
 }
 
+
 double Expression::evaluate(const std::map<std::string, double>& variables) {
   return evaluateRPN(variables);
 }
+
 
 double Expression::evaluateR(const Rcpp::List& vars) {
   std::map<std::string, double> variables;
@@ -175,11 +189,33 @@ double Expression::evaluateR(const Rcpp::List& vars) {
 
 
 Expression *createExpression(std::string expr) {
-  Expression* expr_ptr= new Expression(expr);
+  Expression* expr_ptr = new Expression(expr);
   return expr_ptr;
 }
 
 
 double evaluateExpression(Expression *expr_ptr, Rcpp::List vars) {
   return expr_ptr->evaluateR(vars);
+}
+
+
+std::vector<std::string> Expression::getVariables() {
+  std::vector<std::string> variables;
+
+  for (int i = 0; i < (int)(tokens.size()); i++) {
+    // enum TokenType VARIABLE_TYPE = VARIABLE;
+    if (tokens[i].type != VARIABLE) continue;
+    variables.push_back(tokens[i].value);
+  }
+
+  return variables;
+}
+
+
+// [[Rcpp::export]]
+Rcpp::StringVector getVariablesEquation(std::string expr) {
+  Expression *expr_ptr = createExpression(expr);
+  std::vector<std::string> variables = expr_ptr->getVariables();
+  Rcpp::StringVector out(variables.begin(), variables.end());
+  return out;
 }

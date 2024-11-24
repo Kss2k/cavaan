@@ -27,6 +27,7 @@ public:
 
   double evaluate(const std::map<std::string, double>& variables);
   double evaluateR(const Rcpp::List& vars);
+  std::vector<std::string> getVariables();
 
 private:
   enum TokenType { NUMBER, VARIABLE, FUNCTION, OPERATOR, PARENTHESIS };
@@ -45,6 +46,7 @@ private:
 
   int getPrecedence(const std::string& op);
   bool isRightAssociative(const std::string& op);
+
 
   std::set<std::string> functions = { "sin", "cos", "log", "abs", "sqr" };
 };
@@ -128,12 +130,6 @@ arma::vec getGradientModelGeneral(const arma::vec &theta, Model *model);
 arma::vec normalize(arma::vec x);
 double getLogLikModel(const arma::vec &theta, Model *model);
 
-
-// optimize.cpp
-arma::vec optim(arma::vec theta, Model* model, double (*objective)(arma::vec, Model*),
-    arma::vec (*gradient)(arma::vec, Model*));
-arma::vec optimBFGS(arma::vec theta, Model* model, double (*objective)(arma::vec, Model*),
-    arma::vec (*gradient)(arma::vec, Model*));
 
 // parse_eqations.cpp
 Expression *createExpression(std::string expr);

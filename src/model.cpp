@@ -89,7 +89,7 @@ ParTable *createParTable(Rcpp::List rParTable) {
   parTable->nfree = countFree(parTable->free);
 
   parTable->expressions = std::vector<Expression*>();
-  for (int i = 0; i < parTable->free.size(); i++) {
+  for (int i = 0; i < (int)(parTable->free.size()); i++) {
     if (!parTable->isEquation[i]) continue;
     parTable->expressions.push_back(createExpression(parTable->rhs[i]));
   }
@@ -136,7 +136,10 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
     } else if (!parTable->continueFromLast[i] && parTable->free[i]) {
       tp = theta[t++];
       evaluatedParams[parTable->label[i]] = tp;
-    } else if (!parTable->continueFromLast[i]) tp = parTable->est[i];
+    } else if (!parTable->continueFromLast[i]) {
+      tp = parTable->est[i];
+      evaluatedParams[parTable->label[i]] = tp;
+    }
 
     row   = parTable->row[i];
     col   = parTable->col[i];

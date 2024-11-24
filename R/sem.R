@@ -30,8 +30,6 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
   lower  <- ifelse(isVar, yes=0, no=-Inf)
 
   RcppModel <- createRcppModel(model)
-  fillRcppModel(RcppModel, start)
-  browser()
   # est <- suppressWarnings(nlminb(start, objective=logLikCpp, gradient=gradLogLikCpp, xptr=RcppModel))
   est <- suppressWarnings(nlminb(start, objective=logLikCpp, xptr=RcppModel))
  
