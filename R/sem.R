@@ -17,7 +17,7 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
   parTable <- cavaanify(syntax, groups=groups)
   oVs      <- getOVs(parTable)
   checkOVsData(oVs, data)
-  
+
   model      <- build_model(parTable, data=data)
   parTable.d <- model$parTable.d 
 
@@ -30,10 +30,11 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
   lower  <- ifelse(isVar, yes=0, no=-Inf)
 
   RcppModel <- createRcppModel(model)
-  est <- suppressWarnings(nlminb(start, objective=logLikCpp, gradient=gradLogLikCpp, xptr=RcppModel))
-  # somehow faster with numerical gradient...
-  # est <- suppressWarnings(nlminb(start, objective=logLikCpp, xptr=RcppModel))
-  
+  fillRcppModel(RcppModel, start)
+  browser()
+  # est <- suppressWarnings(nlminb(start, objective=logLikCpp, gradient=gradLogLikCpp, xptr=RcppModel))
+  est <- suppressWarnings(nlminb(start, objective=logLikCpp, xptr=RcppModel))
+ 
   # R and C++/R
   par <- est$par
   model.f <- fillModel(model, par)

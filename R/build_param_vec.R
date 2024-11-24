@@ -19,6 +19,7 @@ getDetailedParTable <- function(models, parTable, seed=pi) {
       `=~` = buildParamGammaB(models, row),
       `~~` = buildParamPhi(models, row),
       `:=` = buildCustomParam(models, row),
+      `==` = buildCustomParam(models, row),
       stop2("unrecoginized operator: ", row$op)
     )
 
@@ -70,13 +71,14 @@ buildParamGammaB <- function(models, row) {
 
   matrix       <- ifelse(isEta, yes=0, no=1)
   matrix.label <- ifelse(isEta, yes="BStar", no="GammaStar")
+  isEquation <- FALSE
 
   stopif(!validRowColMatch(i=i, j=j), "row and col must be unique")
   
   data.frame(lhs=lhs, op=op, rhs=rhs, est=est,
              label=label, row=i, col=j, matrix=matrix,
              matrix.label=matrix.label, free=free, fill=fill,
-             continue=continue, group=group)
+             continue=continue, group=group, isEquation=isEquation)
 }
 
 
@@ -115,10 +117,12 @@ buildParamPhi <- function(models, row) {
     est      <- 1
   }
   
+  isEquation <- FALSE
+
   data.frame(lhs=lhs, op=op, rhs=rhs, est=est,
              label=label, row=rows, col=cols, matrix=2,
              matrix.label="Phi", free=free, fill=fill,
-             continue=continue, group=group)
+             continue=continue, group=group, isEquation=isEquation)
 }
 
 
@@ -134,9 +138,11 @@ buildCustomParam <- function(models, row) {
   group    <- row$group
   fill     <- FALSE
 
+  isEquation <- TRUE
+
   data.frame(lhs=lhs, op=op, rhs=rhs, est=NA, label=label, row=i, col=j, 
              matrix=NA, matrix.label=NA, free=free, fill=fill,
-             continue=continue, group=group)
+             continue=continue, group=group, isEquation=isEquation)
 }
 
 
@@ -145,7 +151,7 @@ getMissingVariances <- function(parTable, aVs) {
   for (x in aVs) {
     if (!any(parTable$lhs == x & parTable$op == "~~" & parTable$rhs == x)) {
       row <- data.frame(lhs=x, op="~~", rhs=x, const="", label="", func="",
-                        closure="", group=group)
+                        closure="", group=group, isEquation=FALSE)
       parTable <- rbind(parTable, row)
     }
   }
@@ -167,7 +173,7 @@ getMissingCovariances <- function(parTable, iVs) {
 
       if (!any(match)) {
         row <- data.frame(lhs=y, op="~~", rhs=x, const="", label="", func="",
-                          closure="", group=group)
+                          closure="", group=group, isEquation=FALSE)
         parTable <- rbind(parTable, row)
       }
     }
@@ -211,6 +217,7 @@ validRowColMatch <- function(i, j) {
 sortParTable <- function(parTable) {
   sortDfBy(parTable, x=free, decreasing=TRUE) |>
     sortDfBy(x=continue, decreasing=FALSE) |>
+    sortDfBy(x=isEquation, decreasing=TRUE) |>
     sortDfBy(x=label, decreasing=FALSE)
 }
 

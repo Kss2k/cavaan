@@ -1,4 +1,4 @@
-#include "model.h"
+#include "cavaan.h"
 #include <float.h>
 #include <cmath>
 

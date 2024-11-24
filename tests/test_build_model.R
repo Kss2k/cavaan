@@ -15,8 +15,17 @@ tpb <- '
   # Causal Relationsships
   INT ~ a * ATT + b * SN + c * PBC
   BEH ~ INT + PBC 
+
+  custom := sin(a) + cos(b) * log(c)
 '
 
+# Create an Expression object
+expr_ptr <- createExpression("sin(a) + cos(b) * log(c)")
+
+# Evaluate the expression with variables
+result <- evaluateExpr(expr_ptr, list(a = 0.5, b = 0.8, c = 2.0, d=-999))
+
+# Evaluate the expression with variables
 fit2 <- lavaan::sem(tpb, TPB)
 fit <- sem(tpb, data=TPB)
 fit

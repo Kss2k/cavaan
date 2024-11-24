@@ -4,12 +4,50 @@
 
 #include <RcppArmadillo.h>
 #include <vector>
+#include <string>
+#include <stack>
+#include <map>
+#include <cmath>
+#include <stdexcept>
+#include <set>
+
+
 // [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp11)]]
 
 
 #define BETA_STAR 0
 #define GAMMA_STAR 1
 #define PHI 2
+
+
+class Expression {
+public:
+  Expression(const std::string& expr);
+
+  double evaluate(const std::map<std::string, double>& variables);
+  double evaluateR(const Rcpp::List& vars);
+
+private:
+  enum TokenType { NUMBER, VARIABLE, FUNCTION, OPERATOR, PARENTHESIS };
+
+  struct Token {
+    TokenType type;
+    std::string value;
+  };
+
+  std::vector<Token> tokens; // Original tokens
+  std::vector<Token> rpn;  // Reverse Polish Notation tokens
+
+  void tokenize(const std::string& expr);
+  void parseToRPN();
+  double evaluateRPN(const std::map<std::string, double>& variables);
+
+  int getPrecedence(const std::string& op);
+  bool isRightAssociative(const std::string& op);
+
+  std::set<std::string> functions = { "sin", "cos", "log", "abs", "sqr" };
+};
 
 
 // Matrices for a single group in a SEM
@@ -27,7 +65,11 @@ typedef struct {
 
 // ParTable
 typedef struct {
+  std::vector<std::string> lhs;
+  std::vector<std::string> op;
+  std::vector<std::string> rhs;
   arma::vec est;
+  std::vector<std::string> label;
   std::vector<int>  matrix;
   std::vector<int>  group;
   std::vector<int>  row;
@@ -35,6 +77,8 @@ typedef struct {
   std::vector<bool> free;
   std::vector<bool> fill;
   std::vector<bool> continueFromLast;
+  std::vector<bool> isEquation;
+  std::vector<Expression*> expressions;
   int nfree;
 } ParTable;
 
@@ -90,5 +134,10 @@ arma::vec optim(arma::vec theta, Model* model, double (*objective)(arma::vec, Mo
     arma::vec (*gradient)(arma::vec, Model*));
 arma::vec optimBFGS(arma::vec theta, Model* model, double (*objective)(arma::vec, Model*),
     arma::vec (*gradient)(arma::vec, Model*));
+
+// parse_eqations.cpp
+Expression *createExpression(std::string expr);
+double evaluateExpression(Expression *expr_ptr, Rcpp::List vars);
+
 
 #endif

@@ -1,4 +1,4 @@
-#include "model.h"
+#include "cavaan.h"
 #include <cmath>
 #include <stdexcept>
 

@@ -1,4 +1,4 @@
-#include "model.h"
+#include "cavaan.h"
 #include <cstdio>
 
 
@@ -68,14 +68,19 @@ int countFree(std::vector<bool> free) {
 ParTable *createParTable(Rcpp::List rParTable) {
   ParTable *parTable = new ParTable();
 
-  parTable->est = Rcpp::as<arma::vec>(rParTable["est"]);
-  parTable->col = Rcpp::as<std::vector<int>>(rParTable["col"]);
-  parTable->row = Rcpp::as<std::vector<int>>(rParTable["row"]);
+  parTable->lhs    = Rcpp::as<std::vector<std::string>>(rParTable["lhs"]);
+  parTable->op     = Rcpp::as<std::vector<std::string>>(rParTable["op"]);
+  parTable->rhs    = Rcpp::as<std::vector<std::string>>(rParTable["rhs"]);
+  parTable->est    = Rcpp::as<arma::vec>(rParTable["est"]);
+  parTable->label  = Rcpp::as<std::vector<std::string>>(rParTable["label"]);
+  parTable->col    = Rcpp::as<std::vector<int>>(rParTable["col"]);
+  parTable->row    = Rcpp::as<std::vector<int>>(rParTable["row"]);
   parTable->matrix = Rcpp::as<std::vector<int>>(rParTable["matrix"]);
   parTable->group  = Rcpp::as<std::vector<int>>(rParTable["group"]);
   parTable->free   = Rcpp::as<std::vector<bool>>(rParTable["free"]);
   parTable->fill   = Rcpp::as<std::vector<bool>>(rParTable["fill"]);
   parTable->continueFromLast = Rcpp::as<std::vector<bool>>(rParTable["continue"]);
+  parTable->isEquation = Rcpp::as<std::vector<bool>>(rParTable["isEquation"]);
 
   parTable->row   = reindexToZero(parTable->row);
   parTable->col   = reindexToZero(parTable->col);
@@ -83,6 +88,11 @@ ParTable *createParTable(Rcpp::List rParTable) {
 
   parTable->nfree = countFree(parTable->free);
 
+  parTable->expressions = std::vector<Expression*>();
+  for (int i = 0; i < parTable->free.size(); i++) {
+    if (!parTable->isEquation[i]) continue;
+    parTable->expressions.push_back(createExpression(parTable->rhs[i]));
+  }
   return parTable;
 }
 
@@ -111,16 +121,23 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
     const arma::vec &theta, bool calcSigma = true, bool fillConst = true) {
 
   MatricesGroup *matrices;
-  int t = 0, row, col, group;
+  int t = 0, e = 0, row, col, group;
   double tp;
+  Rcpp::List evaluatedParams;
 
   for (int i = 0; i < (int)(parTable->fill.size()); i++) {
-    if (!parTable->fill[i] || (!parTable->continueFromLast[i] && 
-        !parTable->free[i] && !fillConst)) continue;
+    if ((!parTable->fill[i] && !parTable->isEquation[i]) || 
+        (!parTable->continueFromLast[i] && !parTable->free[i] && !fillConst)) continue;
 
-    if      (!parTable->continueFromLast[i] && parTable->free[i]) tp = theta[t++];
-    else if (!parTable->continueFromLast[i]) tp = parTable->est[i];
-  
+    if (parTable->isEquation[i]) {
+      tp = evaluateExpression(parTable->expressions[e++], evaluatedParams);
+      evaluatedParams[parTable->label[i]] = tp;
+      continue;
+    } else if (!parTable->continueFromLast[i] && parTable->free[i]) {
+      tp = theta[t++];
+      evaluatedParams[parTable->label[i]] = tp;
+    } else if (!parTable->continueFromLast[i]) tp = parTable->est[i];
+
     row   = parTable->row[i];
     col   = parTable->col[i];
     group = parTable->group[i];
@@ -232,63 +249,3 @@ Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
 
   return Rcpp::NumericVector::create(logLik);
 }
-
-
-// // [[Rcpp::export]]
-// Rcpp::NumericVector logLikR2Cpp(arma::vec theta, Rcpp::List model) {
-//   // Create the model and fill it
-//   Model* m = createModel(model);
-//   fillModel(m, theta, false, true);
-// 
-//   double logLik = 0;
-//   double log_det_Sigma;
-//   double sign_Sigma;
-//   double log_det_S;
-//   double sign_S;
-//   arma::mat Sigma_inv;
-//   double trace_value;
-// 
-//   MatricesGroup* matrices;
-// 
-//   for (int i = 0; i < m->ngroups; i++) {
-//     matrices = m->matricesGroups[i];
-// 
-//     // Compute log(det(Sigma))
-//     arma::log_det(log_det_Sigma, sign_Sigma, matrices->Sigma);
-//     if (sign_Sigma <= 0) {
-//       return Rcpp::NumericVector::create(Rcpp::NumericVector::get_na());  // Return NaN
-//     }
-// 
-//     // Compute log(det(S))
-//     arma::log_det(log_det_S, sign_S, matrices->S);
-//     if (sign_S <= 0) {
-//       return Rcpp::NumericVector::create(Rcpp::NumericVector::get_na());  // Return NaN
-//     }
-// 
-//     // Compute trace of solve(Sigma) %*% S
-//     Sigma_inv = arma::inv(matrices->Sigma);
-//     trace_value = arma::trace(Sigma_inv * matrices->S);
-// 
-//     // Accumulate the log-likelihood
-//     logLik += log_det_Sigma + trace_value - log_det_S - matrices->p;
-//   }
-// 
-//   return Rcpp::NumericVector::create(logLik);  // Return log-likelihood as a single-element vector
-// }
-// 
-// 
-// // [[Rcpp::export]]
-// arma::vec gradLogLikR2Cpp(arma::vec theta, Rcpp::List model) {
-//   Model* m = createModel(model);
-//   fillModel(m, theta, false, true);
-// 
-//   return getGradientModel(theta, m);
-// }
-// 
-// 
-// // [[Rcpp::export]]
-// arma::vec semR2Cpp(arma::vec theta, Rcpp::List rmodel) {
-//   Model *model = createModel(rmodel);
-//   
-//   return optimBFGS(theta, model, getLogLikModel, getGradientModel);
-// }

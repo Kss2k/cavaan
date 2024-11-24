@@ -2,7 +2,8 @@ cavaanify <- function(syntax, groups=NULL) {
   tokenizeSyntax(syntax) |> 
     parseTokens() |> 
     fixIntercepts() |> 
-    pivotGroups(groups)
+    pivotGroups(groups) |> 
+    getIsExpression()
 }
 
 
@@ -181,4 +182,10 @@ getSortedEtasOrDVs <- function(parTable, isLV) {
   }
 
   sorted
+}
+
+
+getIsExpression <- function(parTable) {
+  parTable$isEquation <- parTable$op %in% LARGE_MATH_OPS
+  parTable
 }
