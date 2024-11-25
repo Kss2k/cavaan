@@ -96,18 +96,26 @@ replace_with_residuals <- function(S) {
 
 fscores <- function(inds, data) {
   X <- cov(data[, inds])
-  S <- replace_with_residuals(X)
+  # S <- replace_with_residuals(X)
   E <- eigen(X)
   Eval <- E$values[1]
   Evec <- E$vectors[, 1]
+  if (all(Evec < 0)) Evec <- -Evec
   
-  lambda <- Evec %*% diag(sqrt(Eval))
-  Sff    <- as.matrix(mean(X[1, 1]))
+  lambda <- Evec * sqrt(Eval)
+  print(lambda)
+  Sff    <- as.matrix(X[1, 1])
   Sxf    <- lambda %*% Sff
   Sxx    <- X
   B      <- t(Sxf) %*% solve(Sxx)
-   
+
   apply(data[, inds], MARGIN=1, FUN=\(X_i) B %*% X_i)
 }
 
 PBC <- fscores(c("pbc1", "pbc2", "pbc3"), data=TPB )
+INT <- fscores(c("int1", "int2", "int3"), data=TPB )
+SN  <- fscores(c("sn1", "sn2"), data=TPB )
+BEH <- fscores(c("b1", "b2"), data=TPB )
+ATT <- fscores(c("att1", "att2", "att3", "att4", "att5"), data=TPB )
+lm(INT ~ PBC + ATT + SN)
+lm(BEH ~ PBC + INT)
