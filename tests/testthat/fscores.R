@@ -72,3 +72,42 @@ S <- rbind(cbind(Sff, Sfx),
 lsem(y="BEH", x=c("PBC", "INT"), S=S)
 lsem(y="INT", x=c("PBC", "SN", "ATT"), S=S)
 lsem(y=c("att1", "att2", "att3", "att4", "att5"), x="ATT", S=S)
+
+
+replace_with_residuals <- function(S) {
+  p <- ncol(S)
+  residual_cov <- S
+  
+  for (i in seq_len(p)) {
+    others <- setdiff(seq_len(p), i)
+    
+    S_xx <- S[others, others]      
+    S_yx <- S[i, others, drop = FALSE]
+    
+    beta <-  S_yx %*% solve(S_xx)
+
+    residual_variance <- S[i, i] - S_yx %*% t(beta)
+    residual_cov[i, i] <- residual_cov[i, i] - residual_variance
+  }
+  
+  residual_cov
+}
+
+
+fscores <- function(inds, data) {
+  X <- cov(data[, inds])
+  S <- replace_with_residuals(X)
+  E <- eigen(X)
+  Eval <- E$values[1]
+  Evec <- E$vectors[, 1]
+  
+  lambda <- Evec %*% diag(sqrt(Eval))
+  Sff    <- as.matrix(mean(X[1, 1]))
+  Sxf    <- lambda %*% Sff
+  Sxx    <- X
+  B      <- t(Sxf) %*% solve(Sxx)
+   
+  apply(data[, inds], MARGIN=1, FUN=\(X_i) B %*% X_i)
+}
+
+PBC <- fscores(c("pbc1", "pbc2", "pbc3"), data=TPB )
