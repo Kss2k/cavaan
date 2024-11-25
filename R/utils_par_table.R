@@ -189,3 +189,20 @@ getIsExpression <- function(parTable) {
   parTable$isEquation <- parTable$op %in% LARGE_MATH_OPS
   parTable
 }
+
+
+cleanParTable.d <- function(parTable.d, theta, model) {
+  etas <- model$models[[1]]$info$etas
+  
+  isNegative <- parTable.d$op == "~" | 
+    (parTable.d$op == "~1" & parTable.d$lhs %in% etas)
+  isFree     <- parTable.d$free
+
+  parTable.d[isFree, "est"] <- ifelse(isNegative[isFree], yes=-theta, no=theta)
+ 
+  parTable.d <- sortDfBy(parTable.d, x=continue, decreasing=TRUE) |>
+    sortDfBy(x=free, decreasing=TRUE) |> sortDfBy(x=lhs) |>
+    sortDfBy(x=rhs) |> sortDfBy(x=op)
+
+  parTable.d[!duplicated(parTable.d$label), ]
+}

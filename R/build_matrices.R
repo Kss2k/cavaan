@@ -99,3 +99,13 @@ buildG <- function(xis, etas, mVXs, mVYs) {
   Gx <- buildGx(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
   superDiag(Gy, Gx)
 }
+
+
+buildTau <- function(xis, mVXs, etas, mVYs) {
+  n <- length(xis)
+  q <- length(mVXs)
+  m <- length(etas)
+  p <- length(mVYs)
+  Y <- c(xis, mVXs, etas, mVYs)
+  matrix(0, nrow=n+q+m+p, ncol=1, dimnames=list(Y, "~1"))
+}

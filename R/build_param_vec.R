@@ -6,8 +6,12 @@ getDetailedParTable <- function(models, parTable, seed=pi) {
   for (group in groups) {
     aVs <- models[[group]]$info$aVs
     iVs <- models[[group]]$info$iVs
-    parTable <- getMissingVariances(parTable, aVs)
-    parTable <- getMissingCovariances(parTable, iVs)
+    oVs <- models[[group]]$info$oVs
+    lVs <- models[[group]]$info$lVs
+
+    parTable <- getMissingVariances(parTable, aVs=aVs)
+    parTable <- getMissingCovariances(parTable, iVs=iVs)
+    parTable <- getMissingIntercepts(parTable, oVs=oVs, lVs=lVs)
   }
 
   parTableY <- NULL
@@ -20,7 +24,7 @@ getDetailedParTable <- function(models, parTable, seed=pi) {
       `~~` = buildParamPhi(models, row),
       `:=` = buildCustomParam(models, row),
       `==` = buildCustomParam(models, row),
-      `~1` = warnReturnNULL("~1 not supported yet, ignoring"),
+      `~1` = buildParamTau(models, row),
       stop2("unrecoginized operator: ", row$op)
     )
 
@@ -129,6 +133,39 @@ buildParamPhi <- function(models, row) {
 }
 
 
+buildParamTau <- function(models, row) {
+  group <- ifelse(row$group == "", yes=1, no=row$group)
+  model <- models[[group]]
+
+  T <- model$matrices$Tau
+
+  lhs   <- row$lhs
+  op    <- row$op
+  label <- row$label
+
+  r <- lhs
+
+  i     <- which(rownames(T) == r)
+  label <- ifelse(label != "", label, sprintf("%s%s", lhs, op))
+  fill  <- TRUE
+
+  stopif(length(i) > 1, "Found multiple matches for intercept row!")
+
+  free       <- ifelse(row$const == "", yes=TRUE, no=FALSE)
+  continue   <- FALSE
+  isEquation <- FALSE
+  isOv       <- r %in% model$info$oVs
+  est        <- ifelse(row$const != "", yes=as.numeric(row$const),
+                       no=ifelse(isOv, yes=models[[group]]$matrices$Nu[r, 1],
+                                 no=stats::runif(1)))
+  
+  data.frame(lhs=lhs, op=op, rhs="", est=est, label=label, 
+             row=i, col=1, # there is only one column
+             matrix=3, matrix.label="Tau", free=free, fill=fill,
+             continue=continue, group=group, isEquation=isEquation)
+}
+
+
 buildCustomParam <- function(models, row) {
   lhs      <- row$lhs
   op       <- row$op
@@ -152,11 +189,11 @@ buildCustomParam <- function(models, row) {
 getMissingVariances <- function(parTable, aVs) {
   group <- unique(parTable$group)
   for (x in aVs) {
-    if (!any(parTable$lhs == x & parTable$op == "~~" & parTable$rhs == x)) {
-      row <- data.frame(lhs=x, op="~~", rhs=x, const="", label="", func="",
-                        closure="", group=group, isEquation=FALSE)
-      parTable <- rbind(parTable, row)
-    }
+    if (any(parTable$lhs == x & parTable$op == "~~" & parTable$rhs == x)) next
+
+    row <- data.frame(lhs=x, op="~~", rhs=x, const="", label="", func="",
+                      closure="", group=group, isEquation=FALSE)
+    parTable <- rbind(parTable, row)
   }
 
   parTable
@@ -174,12 +211,61 @@ getMissingCovariances <- function(parTable, iVs) {
       match <- parTable$lhs == x & parTable$op == "~~" & parTable$rhs == y
       match <- match | (parTable$lhs == y & parTable$op == "~~" & parTable$rhs == x)
 
-      if (!any(match)) {
-        row <- data.frame(lhs=y, op="~~", rhs=x, const="", label="", func="",
-                          closure="", group=group, isEquation=FALSE)
-        parTable <- rbind(parTable, row)
-      }
+      if (any(match)) next
+
+      row <- data.frame(lhs=y, op="~~", rhs=x, const="", label="", func="",
+                        closure="", group=group, isEquation=FALSE)
+      parTable <- rbind(parTable, row)
     }
+  }
+
+  parTable
+}
+
+
+needConstrainedIntercepts <- function(parTable, oV) {
+  lVRow <- parTable$rhs == oV & parTable$op == "=~"
+  
+  if (!any(lVRow)) return(FALSE)
+
+  lVs <- unique(parTable[lVRow, "lhs"])
+
+  lVIntercepts <- parTable[parTable$lhs %in% lVs & parTable$op == "~1", ]
+  if (!NROW(lVIntercepts) || any(lVIntercepts$const != "" | 
+                                 lVIntercepts$label != "")) return(FALSE)
+
+  inds <- parTable[parTable$op == "=~" & parTable$lhs %in% lVs, "rhs"]
+
+  indIntercepts <- parTable[parTable$lhs %in% inds & parTable$op == "~1", ]
+  if (!NROW(indIntercepts)) return(TRUE)
+
+  all(indIntercepts$const == "" & indIntercepts$label == "")
+}
+
+
+getMissingIntercepts <- function(parTable, lVs, oVs) {
+  group <- unique(parTable$group)
+
+  hasInterceptsOVs <- any(parTable$lhs %in% oVs & parTable$op == "~1")
+  hasInterceptsLVs <- any(parTable$lhs %in% lVs & parTable$op == "~1")
+
+  if (!hasInterceptsOVs & !hasInterceptsLVs) return(parTable)
+  
+  if (hasInterceptsLVs) for (lV in lVs) {
+    if (any(parTable$lhs == lV & parTable$op == "~1")) next
+
+    row <- data.frame(lhs=lV, op="~1", rhs=NA, const="", label="", func="",
+                      closure="", group=group, isEquation=FALSE)
+    parTable <- rbind(parTable, row)
+  }
+
+  for (oV in oVs) {
+    if (any(parTable$lhs == oV & parTable$op == "~1")) next
+    needConstrained <- needConstrainedIntercepts(parTable, oV)
+    const <- ifelse(needConstrained, yes="0", no="")
+    row <- data.frame(lhs=oV, op="~1", rhs=NA, const=const, label="", func="",
+                      closure="", group=group, isEquation=FALSE)
+    parTable <- rbind(parTable, row)
   }
 
   parTable

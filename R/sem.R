@@ -1,4 +1,4 @@
-sem <- function(syntax, data, group=NULL, start=NULL) {
+sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   data   <- as.data.frame(data)
   
   if (!is.null(group)) {
@@ -28,26 +28,18 @@ sem <- function(syntax, data, group=NULL, start=NULL) {
     parTable.d$lhs[isfree] == parTable.d$rhs[isfree]
   upper  <- rep(Inf, length(start)) 
   lower  <- ifelse(isVar, yes=0, no=-Inf)
+  # ------------------------------------------------------
 
   RcppModel <- createRcppModel(model)
-  # est <- suppressWarnings(nlminb(start, objective=logLikCpp, gradient=gradLogLikCpp, xptr=RcppModel))
-  est <- suppressWarnings(nlminb(start, objective=logLikCpp, xptr=RcppModel))
+  gradient  <- if (num.grad) NULL else gradLogLikCpp
+  est <- nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
+                gradient=gradient)
  
-  # R and C++/R
-  par <- est$par
-  model.f <- fillModel(model, par)
+  par            <- est$par
+  model.f        <- fillModel(model, par)
   model.f$coef   <- par
   model.f$nlminb <- est
-
-  # ----------------------------------------------------
-
-  # CLEAN THIS UP! -------------------------------------
-  parTable.d <- model.f$parTable.d  
-  parTable.d[model.f$parTable.d$free, 'est'] <- par
-  parTable.d[parTable.d$op == "~", "est"] <- 
-      - parTable.d[parTable.d$op == "~", "est"]
-  model.f$parTable.d <- parTable.d
-  # ----------------------------------------------------
+  model.f$parTable.d <- cleanParTable.d(model.f$parTable.d, theta=par, model=model.f)
   
   class(model.f) <- "cavaan"
   model.f

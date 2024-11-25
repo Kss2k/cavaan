@@ -19,6 +19,7 @@
 #define BETA_STAR 0
 #define GAMMA_STAR 1
 #define PHI 2
+#define TAU 3
 
 
 class Expression {
@@ -57,10 +58,13 @@ typedef struct {
   arma::mat BStar;
   arma::mat GammaStar;
   arma::mat Phi;
+  arma::mat Tau;
   arma::mat BStarInv;
   arma::mat G;
   arma::mat S;
   arma::mat Sigma;
+  arma::mat Mu;
+  arma::mat Nu;
   int p;
 } MatricesGroup;
 

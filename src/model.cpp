@@ -10,10 +10,12 @@ MatricesGroup *createMatricesGroup(Rcpp::List submodel) {
   matricesGroup->BStar     = Rcpp::as<arma::mat>(matrices["BStar"]);
   matricesGroup->GammaStar = Rcpp::as<arma::mat>(matrices["GammaStar"]);
   matricesGroup->Phi       = Rcpp::as<arma::mat>(matrices["Phi"]);
+  matricesGroup->Tau       = Rcpp::as<arma::mat>(matrices["Tau"]);
   matricesGroup->BStarInv  = Rcpp::as<arma::mat>(matrices["BStarInv"]);
   matricesGroup->G         = Rcpp::as<arma::mat>(matrices["G"]);
   matricesGroup->S         = Rcpp::as<arma::mat>(matrices["S"]);
-  matricesGroup->Sigma     = Rcpp::as<arma::mat>(matrices["Sigma"]);
+  matricesGroup->Mu        = Rcpp::as<arma::mat>(matrices["Mu"]);
+  matricesGroup->Nu        = Rcpp::as<arma::mat>(matrices["Nu"]);
 
   matricesGroup->p =   Rcpp::as<int>(matrices["p"]);
 
@@ -27,20 +29,26 @@ MatricesGroup *copyMatricesGroup(MatricesGroup *matricesGroup, bool fillZero = t
   copyMatricesGroup->BStar     = matricesGroup->BStar;
   copyMatricesGroup->GammaStar = matricesGroup->GammaStar;
   copyMatricesGroup->Phi       = matricesGroup->Phi;
+  copyMatricesGroup->Tau       = matricesGroup->Tau;
   copyMatricesGroup->BStarInv  = matricesGroup->BStarInv;
   copyMatricesGroup->G         = matricesGroup->G;
   copyMatricesGroup->S         = matricesGroup->S;
   copyMatricesGroup->Sigma     = matricesGroup->Sigma;
+  copyMatricesGroup->Mu        = matricesGroup->Mu;
+  copyMatricesGroup->Nu        = matricesGroup->Nu;
 
 
   if (fillZero) {
     copyMatricesGroup->BStar.fill(0);
     copyMatricesGroup->GammaStar.fill(0);
     copyMatricesGroup->Phi.fill(0);
+    copyMatricesGroup->Tau.fill(0);
     copyMatricesGroup->BStarInv.fill(0);
     copyMatricesGroup->G.fill(0);
     copyMatricesGroup->S.fill(0);
     copyMatricesGroup->Sigma.fill(0);
+    copyMatricesGroup->Nu.fill(0);
+    copyMatricesGroup->Mu.fill(0);
   }
 
   return copyMatricesGroup;
@@ -151,6 +159,7 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
       case BETA_STAR:  {matrices->BStar.at(row, col)     = tp; break;}
       case GAMMA_STAR: {matrices->GammaStar.at(row, col) = tp; break;}
       case PHI:        {matrices->Phi.at(row, col)       = tp; break;}
+      case TAU:        {matrices->Tau.at(row, col)       = tp; break;}
       default: Rcpp::stop("Unrecognized matrix index");
     }
   } 
@@ -168,6 +177,7 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
 
       matrices->BStarInv = BStarInv;
       matrices->Sigma = Sigma;
+      matrices->Mu = matrices->G * BStarInv * matrices->GammaStar * matrices->Tau;
     } 
   }
 
@@ -177,7 +187,6 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
 void fillModel(Model *model, const arma::vec &theta, bool replace = false,
                bool calcSigma = true) {
   fillMatricesGroups(model->matricesGroups, model->parTable, theta, true);
-
   // replace is not implemented yet!!
 }
 
@@ -199,7 +208,7 @@ Rcpp::NumericVector ViewModelCreation(Rcpp::List RModel, arma::vec theta) {
 // [[Rcpp::export]]
 RcppExport SEXP createRcppModel(Rcpp::List RModel) {
   Model *model = createModel(RModel);
-  Rcpp::XPtr xptr(model);
+  Rcpp::XPtr<Model> xptr(model);
   return xptr;
 }
 
@@ -227,7 +236,7 @@ Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
 
   double logLik = 0, valLDSigma, signLDSigma, valLDS, signLDS;
   bool okLDSigma, okLDS, okSigmaInv;
-  arma::mat SigmaInv, S, Sigma;
+  arma::mat SigmaInv, S, Sigma, Nu, Mu;
   int p;
 
   MatricesGroup* matrices;
@@ -237,6 +246,8 @@ Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
 
     S     = matrices->S;
     Sigma = matrices->Sigma;
+    Nu    = matrices->Nu;
+    Mu    = matrices->Mu;
     p     = matrices->p;
 
     okLDS      = arma::log_det(valLDS, signLDS, S);
@@ -246,8 +257,9 @@ Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
     if (!okLDS || !okLDSigma || !okSigmaInv || signLDSigma < 0 || signLDS < 0) {
       return Rcpp::NumericVector::create(Rcpp::NumericVector::get_na());
     }
-    
-    logLik += valLDSigma + arma::trace(S * SigmaInv) - valLDS - p;
+   
+    logLik += valLDSigma + arma::trace(S * SigmaInv) - valLDS - p + 
+      arma::as_scalar((Nu - Mu).t() * SigmaInv * (Nu - Mu));
   }
 
   return Rcpp::NumericVector::create(logLik);

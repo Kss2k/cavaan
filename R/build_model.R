@@ -6,12 +6,14 @@ build_submodel <- function(parTable, data) {
   mVYs  <- getMVYs(parTable)
   mVXs  <- getMVXs(parTable)
   oVs   <- getOVs(parTable)
+  lVs   <- getLVs(parTable)
   p     <- length(oVs)
 
   Gamma <- buildGamma(etas=etas, xis=xis, mVXs=mVXs, mVYs=mVYs)
   A     <- buildA(etas=etas, mVYs=mVYs)
   Phi   <- buildPhi(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
   G     <- buildG(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
+  Tau   <- buildTau(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
   B     <- buildB(A=A) 
   
   IGamma    <- buildIGamma(xis=xis, mVXs=mVXs, etas=etas, mVYs=mVYs)
@@ -21,11 +23,14 @@ build_submodel <- function(parTable, data) {
 
   Sigma <- G %*% BStar %*% GammaStar %*% Phi %*% t(GammaStar) %*% t(BStar) %*% t(G)
   S     <- cov(data[ , colnames(Sigma)])
+  Nu    <- as.matrix(colMeans(data[ , colnames(Sigma)]))
+  Mu    <- G %*% BStar %*% GammaStar %*% Tau
 
   matrices <- list(
     A=A, 
     Gamma=Gamma, 
     Phi=Phi, 
+    Tau=Tau,
     G=G,
     B=B,
     BStar=BStar,
@@ -33,6 +38,8 @@ build_submodel <- function(parTable, data) {
     GammaStar=GammaStar,
     Sigma=Sigma,
     S=S,
+    Nu=Nu,
+    Mu=Mu,
     p=p
   )
 
@@ -42,7 +49,9 @@ build_submodel <- function(parTable, data) {
     mVYs=mVYs,
     mVXs=mVXs,
     aVs=aVs,
-    iVs=iVs
+    iVs=iVs,
+    lVs=lVs,
+    oVs=oVs
   )
 
   list(matrices=matrices, info=info, parTable=parTable)

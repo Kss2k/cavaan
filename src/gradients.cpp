@@ -1,6 +1,5 @@
 #include "cavaan.h"
 #include <cmath>
-#include <stdexcept>
 
 
 void getBaseGradients(Model *model) {
@@ -44,6 +43,9 @@ arma::vec getGradientModelSimple(const arma::vec& theta, Model* model) {
     const arma::mat& Phi       = matricesGroup->Phi;
     const arma::mat& GammaStar = matricesGroup->GammaStar;
     const arma::mat& BStarInv  = matricesGroup->BStarInv;
+    const arma::mat& Tau       = matricesGroup->Tau;
+    const arma::mat& Nu        = matricesGroup->Nu;
+    const arma::mat& Mu        = matricesGroup->Mu;
  
     arma::mat I = arma::eye(Phi.n_rows, Phi.n_cols);   
     arma::mat SigmaInv;
@@ -54,14 +56,14 @@ arma::vec getGradientModelSimple(const arma::vec& theta, Model* model) {
     const arma::mat G_T         = G.t();
     const arma::mat Q           = SigmaInv - SigmaInv * S * SigmaInv;
 
-
     arma::mat DerivPhi = (GammaStar_T * BStarInv_T * G_T * Q * G * BStarInv * GammaStar);
     arma::mat DerivGammaStar = (BStarInv_T * G_T * Q * G * BStarInv * GammaStar * Phi);
     arma::mat DerivBStar = (BStarInv_T * G_T * Q * G * BStarInv * 
         GammaStar * Phi * GammaStar_T * BStarInv_T);
+    arma::mat DerivTau = (G * BStarInv * GammaStar).t() * SigmaInv * (Nu - Mu);
 
     int t = 0;
-    for (int i = 0; i < parTable->free.size() && t < npar; i++) {
+    for (int i = 0; i < (int)(parTable->free.size()) && t < npar; i++) {
       if (!parTable->free[i]) continue;
 
       int row = parTable->row[i];
@@ -71,6 +73,7 @@ arma::vec getGradientModelSimple(const arma::vec& theta, Model* model) {
         case BETA_STAR:  {grad[t++] += -2 * DerivBStar.at(row, col); break;}
         case GAMMA_STAR: {grad[t++] +=  2 * DerivGammaStar.at(row, col); break;}
         case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
+        case TAU:        {grad[t++] += -2 * DerivTau.at(row, 0); break;}
         default: Rcpp::stop("Unrecognized matrix index");
       }
     }
@@ -82,6 +85,7 @@ arma::vec getGradientModelSimple(const arma::vec& theta, Model* model) {
 
 
 arma::vec getGradientModelGeneral(const arma::vec& theta, Model* model) {
+  // THIS IS NOT IMPLEMENTED FOR MODELS WITH MEANSTRUCTURE!
   fillModel(model, theta, false, true);
 
   int npar = model->parTable->nfree;
@@ -118,6 +122,7 @@ arma::vec getGradientModelGeneral(const arma::vec& theta, Model* model) {
 
       arma::mat temp = BStarInv * GammaStar;
       arma::mat temp_T = temp.t();
+      // THIS IS NOT IMPLEMENTED FOR MODELS WITH MEANSTRUCTURE!
       arma::mat DerivSigma = G * (
           DerivBStarInv * GammaStar * Phi * GammaStar_T * BStarInv_T +
           BStarInv * DerivGammaStar * Phi * GammaStar_T * BStarInv_T +
