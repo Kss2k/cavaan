@@ -28,9 +28,10 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
     parTable.d$lhs[isfree] == parTable.d$rhs[isfree]
   upper  <- rep(Inf, length(start)) 
   lower  <- ifelse(isVar, yes=0, no=-Inf)
-  # ------------------------------------------------------
 
+  # ------------------------------------------------------
   RcppModel <- createRcppModel(model)
+  fillRcppModel(RcppModel, start)
   gradient  <- if (num.grad) NULL else gradLogLikCpp
   est <- nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
                 gradient=gradient)

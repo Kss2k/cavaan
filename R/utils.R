@@ -88,3 +88,8 @@ sortDfBy <- function(df, x, ...) {
   x <- as.character(substitute(x))
   df[order(df[[x]], ...), ]
 }
+
+
+const2num <- function(x) {
+  suppressWarnings(as.numeric(x))
+}

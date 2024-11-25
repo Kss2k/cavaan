@@ -149,6 +149,7 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
       evaluatedParams[parTable->label[i]] = tp;
     }
 
+    if (!arma::is_finite(tp)) Rcpp::Rcout << "label: " << parTable->label[i] << ", val: " << tp << '\n';
     row   = parTable->row[i];
     col   = parTable->col[i];
     group = parTable->group[i];

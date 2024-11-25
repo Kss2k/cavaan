@@ -32,7 +32,6 @@ getDetailedParTable <- function(models, parTable, seed=pi) {
   }
 
   parTableY <- constrainParams(parTableY)
-
   sortParTable(parTableY)
 }
 
@@ -44,23 +43,24 @@ buildParamGammaB <- function(models, row) {
   G <- model$matrices$Gamma
   B <- model$matrices$B
 
-  lhs   <- row$lhs
-  op    <- row$op
-  rhs   <- row$rhs
-  label <- row$label
-  etas  <- model$info$etas
-  mVYs  <- model$info$mVYs
-  Y     <- c(etas, mVYs)
-
+  lhs     <- row$lhs
+  op      <- row$op
+  rhs     <- row$rhs
+  label   <- row$label
+  etas    <- model$info$etas
+  mVYs    <- model$info$mVYs
+  Y       <- c(etas, mVYs)
+  free    <- row$const == "" & row$label == ""
+  isconst <- row$const != ""
   if (op == "~") {
     r     <- lhs
     c     <- rhs
-    est   <- ifelse(row$const == "", yes=stats::runif(1), no=as.numeric(row$const))
+    est   <- ifelse(row$const == "", yes=stats::runif(1), no=const2num(row$const))
     isEta <- rhs %in% Y
   } else if (op == "=~") {
     r     <- rhs
     c     <- lhs
-    est   <- ifelse(row$const == "", yes=stats::runif(1), no=as.numeric(row$const))
+    est   <- ifelse(row$const == "", yes=stats::runif(1), no=const2num(row$const))
     isEta <- lhs %in% etas
   } else {
     stop2("unrecoginized operator: ", row$op)
@@ -69,7 +69,6 @@ buildParamGammaB <- function(models, row) {
   M        <- if (isEta) B else G
   i        <- which(rownames(M) == r)
   j        <- which(colnames(M) == c)
-  free     <- ifelse(row$const == "", yes=TRUE, no=FALSE)
   continue <- FALSE
   fill     <- TRUE
   label    <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
@@ -83,13 +82,15 @@ buildParamGammaB <- function(models, row) {
   data.frame(lhs=lhs, op=op, rhs=rhs, est=est,
              label=label, row=i, col=j, matrix=matrix,
              matrix.label=matrix.label, free=free, fill=fill,
-             continue=continue, group=group, isEquation=isEquation)
+             continue=continue, group=group, isEquation=isEquation, 
+             isconst=isconst)
 }
 
 
 buildParamPhi <- function(models, row) {
   group <- ifelse(row$group == "", yes=1, no=row$group)
   model <- models[[group]]
+  xis   <- models[[group]]$info$xis
 
   G <- model$matrices$Phi
 
@@ -101,35 +102,35 @@ buildParamPhi <- function(models, row) {
   r <- lhs
   c <- rhs
 
-  i     <- which(rownames(G) == r)
-  j     <- which(colnames(G) == c)
-  label <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
-  fill  <- TRUE
-
+  i       <- which(rownames(G) == r)
+  j       <- which(colnames(G) == c)
+  label   <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
+  fill    <- TRUE
+  free    <- row$const == "" & row$label == ""
+  isconst <- row$const != ""
   stopif(!validRowColMatch(i=i, j=j), "row and col must be unique")
 
   if (j != i) {
     rows     <- c(i, j)
     cols     <- c(j, i)
-    free     <- ifelse(row$const == "", yes=TRUE, no=FALSE)
+    est      <- ifelse(row$const == "", yes=0, no=const2num(row$const))
     free     <- c(free, FALSE)
     continue <- c(FALSE, TRUE)
-    est      <- ifelse(row$const == "", yes=0, no=as.numeric(row$const))
     est      <- c(est, est)
   } else {
     rows     <- i
     cols     <- j
-    free     <- ifelse(row$const == "", yes=TRUE, no=FALSE)
+    est      <- ifelse(row$const != "", yes=const2num(row$const),
+                       no=ifelse(lhs %in% xis, yes=1, no=stats::runif(1) + 0.2))
     continue <- FALSE
-    est      <- ifelse(row$const == "", yes=stats::runif(1), no=as.numeric(row$const))
   }
   
   isEquation <- FALSE
-
   data.frame(lhs=lhs, op=op, rhs=rhs, est=est,
              label=label, row=rows, col=cols, matrix=2,
              matrix.label="Phi", free=free, fill=fill,
-             continue=continue, group=group, isEquation=isEquation)
+             continue=continue, group=group, isEquation=isEquation,
+             isconst=isconst)
 }
 
 
@@ -151,18 +152,20 @@ buildParamTau <- function(models, row) {
 
   stopif(length(i) > 1, "Found multiple matches for intercept row!")
 
-  free       <- ifelse(row$const == "", yes=TRUE, no=FALSE)
+  free       <- row$const == "" & row$label == ""
+  isconst    <- row$const != ""
   continue   <- FALSE
   isEquation <- FALSE
   isOv       <- r %in% model$info$oVs
-  est        <- ifelse(row$const != "", yes=as.numeric(row$const),
+  est        <- ifelse(row$const != "", yes=const2num(row$const),
                        no=ifelse(isOv, yes=models[[group]]$matrices$Nu[r, 1],
                                  no=stats::runif(1)))
-  
+
   data.frame(lhs=lhs, op=op, rhs="", est=est, label=label, 
              row=i, col=1, # there is only one column
              matrix=3, matrix.label="Tau", free=free, fill=fill,
-             continue=continue, group=group, isEquation=isEquation)
+             continue=continue, group=group, isEquation=isEquation,
+             isconst=isconst)
 }
 
 
@@ -182,7 +185,8 @@ buildCustomParam <- function(models, row) {
 
   data.frame(lhs=lhs, op=op, rhs=rhs, est=NA, label=label, row=i, col=j, 
              matrix=NA, matrix.label=NA, free=free, fill=fill,
-             continue=continue, group=group, isEquation=isEquation)
+             continue=continue, group=group, isEquation=isEquation,
+             isconst=FALSE)
 }
 
 
@@ -253,8 +257,7 @@ getMissingIntercepts <- function(parTable, lVs, oVs) {
   
   if (hasInterceptsLVs) for (lV in lVs) {
     if (any(parTable$lhs == lV & parTable$op == "~1")) next
-
-    row <- data.frame(lhs=lV, op="~1", rhs=NA, const="", label="", func="",
+    row <- data.frame(lhs=lV, op="~1", rhs=NA, const="0", label="", func="",
                       closure="", group=group, isEquation=FALSE)
     parTable <- rbind(parTable, row)
   }
@@ -275,23 +278,37 @@ getMissingIntercepts <- function(parTable, lVs, oVs) {
 constrainParams <- function(parTable, fix.first=TRUE) {
   lVs <- getLVs(parTable)
 
-  if (fix.first) {
-    for (lV in lVs) {
-      parTable[parTable$lhs == lV, "free"][1] <- FALSE
-      parTable[parTable$lhs == lV, "est"][1]  <- 1
-    }
-  }
-
   labels <- unique(parTable$label)
   for (label in labels) {
     rows <- parTable$label == label
-    if (!any(parTable[rows, "free"])) next
+    if (any(rows & parTable$lhs == label & parTable$op %in% LARGE_MATH_OPS)) {
+      parTable[rows, "free"]     <- FALSE
+      parTable[rows, "continue"] <- TRUE
+      parTable[rows & parTable$lhs == label, "continue"] <- FALSE
 
-    if (NROW(rows) > 1) {
-      parTable[rows, "free"]    <- FALSE
-      parTable[rows, "free"][1] <- TRUE
+    } else if (NROW(rows) > 1) {
+      parTable[rows, "free"]        <- FALSE
+      parTable[rows, "free"][1]     <- TRUE
+      parTable[rows, "continue"]    <- TRUE
+      parTable[rows, "continue"][1] <- FALSE
+    } else if (NROW(rows) && !any(rows & parTable$isconst)) {
+      parTable[rows, "free"] <- TRUE
     }
   }
+
+  if (fix.first) {
+    for (lV in lVs) {
+      if (!all(parTable[parTable$lhs == lV & parTable$op == "=~", "free"])) next
+      parTable[parTable$lhs == lV & parTable$op == "=~", "free"][1]    <- FALSE
+      parTable[parTable$lhs == lV & parTable$op == "=~", "isconst"][1] <- TRUE
+      parTable[parTable$lhs == lV & parTable$op == "=~", "est"][1]  <- 1
+    }
+  }
+
+  parTable[parTable$isconst, "free"] <- FALSE
+  # parTable[parTable$free | parTable$isconst, "continue"] <- FALSE
+  # garuantee failure if trying to fill without initializing first!
+  parTable[!parTable$free & !parTable$isconst, "est"] <- NA 
 
   parTable
 }
@@ -329,7 +346,7 @@ sortParTable <- function(parTable) {
 
   sortedParTable <- NULL
   for (label in sortedLabels) {
-    row <-  partiallySorted[partiallySorted$label == label, , drop=FALSE]
+    row <- partiallySorted[partiallySorted$label == label, , drop=FALSE]
     sortedParTable <- rbind(sortedParTable, row)
   }
 
