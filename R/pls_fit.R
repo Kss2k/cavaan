@@ -37,8 +37,8 @@ getFitPLS <- function(model, consistent = TRUE, unstandardized = TRUE) {
   }
 
   if (unstandardized) {
-    firstLoadings <- getFirstLoadingsLVs(Lambda=Lambda, lVs=lVs)
-    newVariances  <- firstLoadings ^ 2
+    firstLoadings     <- getFirstLoadingsLVs(Lambda=Lambda, lVs=lVs)
+    newVariances      <- firstLoadings ^ 2
     model$matrices$SC <- rescaleVCOV(model$matrices$SC, vars=lVs, sigmas=newVariances)
     model$matrices$C  <- model$matrices$SC[lVs, lVs]
   }
@@ -53,8 +53,12 @@ getFitPLS <- function(model, consistent = TRUE, unstandardized = TRUE) {
     }
   }
 
-  # Covariance matrix 
-  Sigma <- model$matrices$SC
+  Sigma <- model$matrices$SC[!grepl("__tmp", rownames(model$matrices$SC)), 
+                             !grepl("__tmp", colnames(model$matrices$SC))]
+  Lambda <- Lambda[!grepl("__tmp", rownames(Lambda)), 
+                   !grepl("__tmp", colnames(Lambda))]
+  Gamma <- Gamma[!grepl("__tmp", rownames(Gamma)),
+                 !grepl("__tmp", colnames(Gamma))]
   
   list(Lambda = Lambda, Gamma = Gamma, Sigma = Sigma)
 }

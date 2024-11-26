@@ -2,7 +2,6 @@ pls <- function(parTable, data, maxIter = 100, consistent = TRUE) {
   if (!is.matrix(data)) data <- as.matrix(data)
   
   model <- initPLS(parTable, data) 
-
   model <- estimatePLS(model, maxIter = maxIter, standardize = standardize)
 
   model$fit <- getFitPLS(model, consistent = consistent)

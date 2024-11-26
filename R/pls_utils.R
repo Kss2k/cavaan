@@ -110,3 +110,54 @@ getFirstLoadingsLVs <- function(Lambda, lVs, tol = 1e-8) {
 
   out
 }
+
+
+redefOVsParTable <- function(parTable, oVs) {
+  lVs  <- paste0("__tmp__", oVs) 
+  rows <- data.frame(lhs=lVs, op="=~", rhs=oVs)
+  for (i in seq_along(oVs)) {
+    oV <- oVs[i]
+    lV <- lVs[i]
+    parTable[parTable$op == "~" & parTable$rhs == oV, "rhs"] <- lV
+    parTable[parTable$op == "~" & parTable$lhs == oV, "rhs"] <- lV
+  }
+
+  rbindNA(parTable, rows)
+}
+
+
+getResidualsVCOV <- function(S) {
+  p       <- ncol(S)
+  R       <- S
+  R[TRUE] <- 0
+  
+  for (i in seq_len(p)) {
+    others <- setdiff(seq_len(p), i)
+    
+    S_xx <- S[others, others]      
+    S_yx <- S[i, others, drop = FALSE]
+    
+    beta <-  S_yx %*% solve(S_xx)
+
+    e <- S[i, i] - S_yx %*% t(beta)
+    R[i, i] <- e
+  }
+
+  R
+}
+
+
+getResidualsLVs <- function(model) {
+  lVs   <- model$info$lVs
+  Sigma <- model$fit$Sigma
+  Sigma <- Sigma[colnames(Sigma) %in% lVs, colnames(Sigma) %in% lVs]
+  getResidualsVCOV(Sigma) 
+}
+
+
+getResidualsOVs <- function(model) {
+  oVs <- model$info$oVs
+  Sigma <- model$fit$Sigma
+  R <- getResidualsVCOV(model$fit$Sigma)
+  R[colnames(R) %in% oVs, colnames(R) %in% oVs]
+}

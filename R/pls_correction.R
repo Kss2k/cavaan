@@ -33,10 +33,13 @@ getReliabilityCoefs <- function(model) {
   names(P) <- lVs
 
   for (lV in lVs) {
-    wq <- lambda[indsLvs[[lV]], lV]
+    if (length(indsLvs[[lV]]) <= 1) {
+      P[[lV]] <- 1
+      next
+    }
+    wq   <- lambda[indsLvs[[lV]], lV]
     subS <- S[indsLvs[[lV]], indsLvs[[lV]]]
-
-    A       <- subS
+    A    <- subS
     diag(A) <- 0
 
     B       <- wq %*% t(wq)

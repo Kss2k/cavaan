@@ -1,6 +1,8 @@
 initPLS <- function(parTable, data, S=NULL) {
   matricesAndInfo      <- getMatricesAndInfoPLS(parTable)
   matrices             <- matricesAndInfo$matrices
+  parTable.orig        <- parTable
+  parTable             <- matricesAndInfo$parTable
   sortedData           <- sortData(data, matricesAndInfo$info$allInds) 
   matrices$S           <- if (is.null(S)) cov(as.data.frame(sortedData)) else S
   matrices$C           <- diag(nrow(matrices$gamma))
@@ -14,7 +16,8 @@ initPLS <- function(parTable, data, S=NULL) {
   colnames(matrices$SC) <- rownames(matrices$SC) <- 
     c(colnames(matrices$S), colnames(matrices$C))
                 
-  model <- list(parTable=parTable, matrices=matrices, data=sortedData, 
+  model <- list(parTable=parTable, parTable.orig=parTable.orig,
+                matrices=matrices, data=sortedData, 
                 factorScores=NULL, info=matricesAndInfo$info, 
                 params=NULL, fit=NULL)
 
@@ -25,14 +28,23 @@ initPLS <- function(parTable, data, S=NULL) {
 
 
 getMatricesAndInfoPLS <- function(parTable) {
-  lVs <- parTable[parTable$op == "=~", "lhs"] |> unique()
+  lVs  <- getLVs(parTable)
+  inds <- getIndsLVs(parTable)
+  oVs  <- getOVs(parTable)
+  strctrOVs <- oVs[!oVs %in% inds]
+
+  if (length(strctrOVs)) {
+    parTable <- redefOVsParTable(parTable, oVs=strctrOVs)
+    lVs      <- getLVs(parTable)
+  }
 
   allInds <- vector("character", 0)
   indsLvs <- vector("list", length(lVs))
   names(indsLvs) <- lVs
+
   for (lV in lVs) {
     indsLv <- parTable[parTable$lhs == lV & parTable$op == "=~", "rhs"]
-    allInds <- c(allInds, indsLv)
+    allInds <- unique(c(allInds, indsLv))
     indsLvs[[lV]] <- indsLv
   }
   
@@ -52,10 +64,14 @@ getMatricesAndInfoPLS <- function(parTable) {
 
   # Predecessors and successors
   preds <- succs <- matrix(FALSE, nrow=length(lVs), ncol=length(lVs),
-                  dimnames=list(lVs, lVs))
+                           dimnames=list(lVs, lVs))
   for (lV in lVs) {
     predsLv <- parTable[parTable$lhs == lV & parTable$op == "~", "rhs"]
     succsLv <- parTable[parTable$rhs == lV & parTable$op == "~", "lhs"]
+
+    predsLv <- predsLv[predsLv %in% lVs]
+    succsLv <- succsLv[succsLv %in% lVs]
+
     preds[predsLv, lV] <- TRUE
     succs[succsLv, lV] <- TRUE
     # selectionmatrix 
@@ -76,7 +92,8 @@ getMatricesAndInfoPLS <- function(parTable) {
                    Ip=Ip, 
                    selectLambda=selectLambda, selectGamma=selectGamma,
                    selectCovXis=selectCovXis)
-  info <- list(indsLvs=indsLvs, allInds=allInds, lVs=lVs)
 
-  list(matrices=matrices, info=info)
+  info <- list(indsLvs=indsLvs, allInds=allInds, lVs=lVs, oVs=oVs)
+
+  list(matrices=matrices, info=info, parTable=parTable)
 }

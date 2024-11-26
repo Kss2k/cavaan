@@ -93,3 +93,15 @@ sortDfBy <- function(df, x, ...) {
 const2num <- function(x) {
   suppressWarnings(as.numeric(x))
 }
+
+
+rbindNA <- function(X, Y) {
+  if (is.null(X)) return(Y)
+  if (is.null(Y)) return(X)
+  Y <- Y[colnames(Y) %in% colnames(X)]
+ 
+  missing <- setdiff(colnames(X), colnames(Y))
+  Y[missing] <- NA
+
+  rbind(X, Y)
+}
