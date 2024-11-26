@@ -1,4 +1,4 @@
-cavaanify <- function(syntax, groups=NULL) {
+cavaanify <- function(syntax, groups=1) {
   tokenizeSyntax(syntax) |> 
     parseTokens() |> 
     fixIntercepts() |> 

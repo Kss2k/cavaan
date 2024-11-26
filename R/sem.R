@@ -9,7 +9,6 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
     data[[group]] <- NULL
 
   } else {
-    group      <- "group"
     groups     <- 1
     data$group <- 1
   }
