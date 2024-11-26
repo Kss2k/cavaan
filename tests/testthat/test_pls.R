@@ -50,10 +50,10 @@ tpb_ov <- '
 est_pls_ov <- pls(cavaanify(tpb_ov, groups=1), 10 * TPB)
 est_pls_ov
 
-getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$fit$Sigma)
-getPathCoefs(c("int1", "int2", "int3"), c("INT"), est_pls_ov$fit$Sigma)
-getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$fit$Sigma)
-getResidualsVCOV(est_pls_ov$fit$Sigma)
+getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$Sigma)
+getPathCoefs(c("int1", "int2", "int3"), c("INT"), est_pls_ov$Sigma)
+getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$Sigma)
+getResidualsVCOV(est_pls_ov$Sigma)
 
 
 tpb_ov <- ' 
@@ -71,9 +71,9 @@ tpb_ov <- '
 est_pls_ov <- pls(cavaanify(tpb_ov, groups=1), TPB)
 est_pls_ov
 
-getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$fit$Sigma)
-getPathCoefs(c("int1", "int2", "int3"), c("INT"), est_pls_ov$fit$Sigma)
-getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$fit$Sigma)
-getResidualsVCOV(est_pls_ov$fit$Sigma)
-getResidualsLVs(model=est_pls_ov)
-getResidualsOVs(model=est_pls_ov)
+getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$Sigma)
+getPathCoefs(c("int1", "int2", "int3"), c("INT"), est_pls_ov$Sigma)
+getPathCoefs("INT", c("ATT", "pbc1", "SN"), est_pls_ov$Sigma)
+getResidualsVCOV(est_pls_ov$Sigma)
+getResidualsLVs(fit=est_pls_ov)
+getResidualsOVs(fit=est_pls_ov)

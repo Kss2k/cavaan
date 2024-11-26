@@ -4,7 +4,7 @@ initPLS <- function(parTable, data, S=NULL) {
   parTable.orig        <- parTable
   parTable             <- matricesAndInfo$parTable
   sortedData           <- sortData(data, matricesAndInfo$info$allInds) 
-  matrices$S           <- if (is.null(S)) cov(as.data.frame(sortedData)) else S
+  matrices$S           <- if (is.null(S)) stats::cov(as.data.frame(sortedData)) else S
   matrices$C           <- diag(nrow(matrices$gamma))
   dimnames(matrices$C) <- dimnames(matrices$gamma)
 

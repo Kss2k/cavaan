@@ -60,7 +60,7 @@ getFitPLS <- function(model, consistent = TRUE, unstandardized = TRUE) {
   Gamma <- Gamma[!grepl("__tmp", rownames(Gamma)),
                  !grepl("__tmp", colnames(Gamma))]
   
-  list(Lambda = Lambda, Gamma = Gamma, Sigma = Sigma)
+  list(Lambda = Lambda, Gamma = Gamma, Sigma = Sigma, info=model$info)
 }
 
 

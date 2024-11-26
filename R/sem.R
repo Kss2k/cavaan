@@ -1,3 +1,4 @@
+#' @export
 sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   data   <- as.data.frame(data)
   
@@ -29,11 +30,13 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   lower  <- ifelse(isVar, yes=0, no=-Inf)
 
   # ------------------------------------------------------
+    browser()
   RcppModel <- createRcppModel(model)
-  fillRcppModel(RcppModel, start)
   gradient  <- if (num.grad) NULL else gradLogLikCpp
-  est <- nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
-                gradient=gradient)
+  est       <- #suppressWarnings(
+    stats::nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
+                  gradient=gradient)
+ # )
  
   par            <- est$par
   model.f        <- fillModel(model, par)
@@ -43,9 +46,4 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   
   class(model.f) <- "cavaan"
   model.f
-}
-
-
-viewModelCreation <- function(model) {
-  ViewModelCreation(fit)
 }

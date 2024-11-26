@@ -1,5 +1,6 @@
 devtools::load_all()
 library(modsem)
+library(rbenchmark)
 
 m1 <- '
   # Outer Model
@@ -11,34 +12,12 @@ m1 <- '
   Y ~ X + Z + X:Z 
 '
 
-time <- function(expr) {
-  start <- Sys.time()
-  result <- expr
-  end <- Sys.time()
-  cat("Elapsed = ", end - start, "\n")
-  result
-}
-
 data   <- get_pi_data(m1, method="ca", data=oneInt)
 syntax <- get_pi_syntax(m1, method="ca")
 
-# for now it is sligthly faster
-est_lav <- time(lavaan::sem(syntax, data))
-est_cav <- time(sem(syntax, data, num.grad=TRUE))
-step2 <- function(model) {
-  lVs <- model$info$lVs
-  Ip <- model$matrices$Ip
-  lambda <- model$matrices$lambda
-  partLambda <- cbind(Ip, lambda)
-  gamma <- model$matrices$gamma
-  partGamma <- rbind(cbind(Ip, matrix(0, nrow = nrow(Ip), ncol = ncol(gamma))),
-                     cbind(matrix(0, nrow = nrow(gamma), ncol = ncol(Ip)), gamma))
-  S <- model$matrices$S 
-  C <- model$matrices$C 
-  SC <- model$matrices$SC 
-  model$matrices$C <- t(gamma) %*% C %*% gamma
-  model$matrices$SC <- t(partGamma) %*% t(partLambda) %*% S %*% partLambda %*% partGamma
-  dimnames(model$matrices$SC) <- dimnames(SC)
-  model
-}
-
+benchmark(lavaan::sem(syntax, data), replications=10)
+#>        test replications elapsed relative user.self sys.self ...
+#> lavaan::sem           10 230.962        1   230.923     0.06 ...
+benchmark(cavaan::sem(syntax, data, num.grad=TRUE), replications=10)
+#>        test replications elapsed relative user.self sys.self ...
+#> cavaan::sem           10  68.511        1    68.516        0 ...

@@ -200,9 +200,9 @@ cleanParTable.d <- function(parTable.d, theta, model) {
 
   parTable.d[isFree, "est"] <- ifelse(isNegative[isFree], yes=-theta, no=theta)
  
-  parTable.d <- sortDfBy(parTable.d, x=continue, decreasing=TRUE) |>
-    sortDfBy(x=free, decreasing=TRUE) |> sortDfBy(x=lhs) |>
-    sortDfBy(x=rhs) |> sortDfBy(x=op)
+  parTable.d <- sortDfBy(parTable.d, x="continue", decreasing=TRUE) |>
+    sortDfBy(x="free", decreasing=TRUE) |> sortDfBy(x="lhs") |>
+    sortDfBy(x="rhs") |> sortDfBy(x="op")
 
   parTable.d[!duplicated(parTable.d$label), ]
 }

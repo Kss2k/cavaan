@@ -105,3 +105,12 @@ rbindNA <- function(X, Y) {
 
   rbind(X, Y)
 }
+
+
+time <- function(expr) {
+  start <- Sys.time()
+  result <- expr
+  end <- Sys.time()
+  cat("Elapsed = ", end - start, "\n")
+  result
+}

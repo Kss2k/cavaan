@@ -22,7 +22,7 @@ build_submodel <- function(parTable, data) {
   GammaStar <- buildGammaStar(Gamma=Gamma, IGamma=IGamma)
 
   Sigma <- G %*% BStar %*% GammaStar %*% Phi %*% t(GammaStar) %*% t(BStar) %*% t(G)
-  S     <- cov(data[ , colnames(Sigma)])
+  S     <- stats::cov(data[ , colnames(Sigma)])
   Nu    <- as.matrix(colMeans(data[ , colnames(Sigma)]))
   Mu    <- G %*% BStar %*% GammaStar %*% Tau
 
@@ -66,6 +66,7 @@ build_model <- function(parTable, data) {
     models <- list(build_submodel(parTable, data=data[, oVs]))
 
   } else {
+    warning("GROUPS ARE NOT TESTED YET:\nAtleast these must be fixed!\n  1. Starting params are wrong! \n  2. Labels are wrong!")
     models <- namedList(n=length(groups), names=groups)
     
     for (group in groups) {
@@ -73,9 +74,16 @@ build_model <- function(parTable, data) {
                                         data=data[data$group == group, oVs])
     }
   }
+  mVYs <- models[[1]]$info$mVYs
+  mVXs <- models[[1]]$info$mVXs
+  xis  <- models[[1]]$info$xis
+  etas <- models[[1]]$info$etas
+  lVs  <- models[[1]]$info$lVs
 
   parTable.d    <- getDetailedParTable(models, parTable=parTable)
-  start         <- getStartingParams(parTable.d)
+  plsEstimates  <- pls(parTable=parTable[parTable$group == 1, ], data=data)
+  start         <- getStartingParams(parTable.d, pls=plsEstimates, xis=xis,
+                                     etas=etas, mVYs=mVYs, mVXs=mVXs, lVs=lVs)
 
   list(models=models, parTable.b=parTable, parTable.d=parTable.d,
        data=data, groups=groups, start=start)

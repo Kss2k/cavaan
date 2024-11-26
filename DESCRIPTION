@@ -1,6 +1,6 @@
 Package: cavaan
 Type: Package
-Title: Latent Interaction (and Moderation) Analysis in Structural Equation Models (SEM)
+Title: Latent Variable Analysis using Structural Equation Models (SEM)
 Version: 1.0.4
 Authors@R: 
     person(given = "Kjell", family = "Solem Slupphaug", 

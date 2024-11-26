@@ -71,11 +71,11 @@ buildParamGammaB <- function(models, row) {
   j        <- which(colnames(M) == c)
   continue <- FALSE
   fill     <- TRUE
-  label    <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
+  label    <- ifelse(label != "", label, sprintf("%s%s%s|g=%s", lhs, op, rhs, group))
 
   matrix       <- ifelse(isEta, yes=0, no=1)
   matrix.label <- ifelse(isEta, yes="BStar", no="GammaStar")
-  isEquation <- FALSE
+  isEquation   <- FALSE
 
   stopif(!validRowColMatch(i=i, j=j), "row and col must be unique")
   
@@ -104,7 +104,7 @@ buildParamPhi <- function(models, row) {
 
   i       <- which(rownames(G) == r)
   j       <- which(colnames(G) == c)
-  label   <- ifelse(label != "", label, sprintf("%s%s%s", lhs, op, rhs))
+  label   <- ifelse(label != "", label, sprintf("%s%s%s|g=%s", lhs, op, rhs, group))
   fill    <- TRUE
   free    <- row$const == "" & row$label == ""
   isconst <- row$const != ""
@@ -137,6 +137,7 @@ buildParamPhi <- function(models, row) {
 buildParamTau <- function(models, row) {
   group <- ifelse(row$group == "", yes=1, no=row$group)
   model <- models[[group]]
+  etas  <- model$info$etas
 
   T <- model$matrices$Tau
 
@@ -147,7 +148,7 @@ buildParamTau <- function(models, row) {
   r <- lhs
 
   i     <- which(rownames(T) == r)
-  label <- ifelse(label != "", label, sprintf("%s%s", lhs, op))
+  label <- ifelse(label != "", label, sprintf("%s%s|g=%s", lhs, op, group))
   fill  <- TRUE
 
   stopif(length(i) > 1, "Found multiple matches for intercept row!")
@@ -160,6 +161,7 @@ buildParamTau <- function(models, row) {
   est        <- ifelse(row$const != "", yes=const2num(row$const),
                        no=ifelse(isOv, yes=models[[group]]$matrices$Nu[r, 1],
                                  no=stats::runif(1)))
+  est         <- if (lhs %in% etas) -est else est 
 
   data.frame(lhs=lhs, op=op, rhs="", est=est, label=label, 
              row=i, col=1, # there is only one column
@@ -321,9 +323,9 @@ validRowColMatch <- function(i, j) {
 
 
 sortParTable <- function(parTable) {
-  partiallySorted <- sortDfBy(parTable, x=free, decreasing=TRUE) |>
-    sortDfBy(x=continue, decreasing=FALSE) |>
-    sortDfBy(x=isEquation, decreasing=TRUE)
+  partiallySorted <- sortDfBy(parTable, x="free", decreasing=TRUE) |>
+    sortDfBy(x="continue", decreasing=FALSE) |>
+    sortDfBy(x="isEquation", decreasing=TRUE)
 
   equations <- parTable[parTable$op %in% LARGE_MATH_OPS, , drop=FALSE]
   unsortedLabels <- unique(c(equations$lhs, parTable$label))
@@ -354,8 +356,64 @@ sortParTable <- function(parTable) {
 }
 
 
-getStartingParams <- function(parTable.d) {
-  theta <- parTable.d[parTable.d$free, "est"]
-  names(theta) <- parTable.d[parTable.d$free, "label"]
-  theta
+getStartingParams <- function(parTable.d, pls, xis, mVXs, etas, mVYs, lVs) {
+  parTable.f <- parTable.d[!parTable.d$op %in% LARGE_MATH_OPS, ]
+  parTable.s <- data.frame(lhs=NULL, op=NULL, rhs=NULL, est.pls=NULL)
+  
+  Xs    <- c(xis, mVXs)
+  S     <- pls$Sigma
+  Phi   <- as.matrix(S[Xs, Xs])
+  Psi   <- as.matrix(getResidualsLVs(pls)[etas, etas])
+  Theta <- as.matrix(getResidualsOVs(pls)[mVYs, mVYs])
+
+  # path coefficients(
+  Y <- unique(parTable.f[parTable.f$op == "~", "lhs"])
+  for (y in Y) {
+    x     <- parTable.f[parTable.f$lhs == y & parTable.f$op == "~", "rhs"]
+    coefs <- - getPathCoefs(y=y, x=x, S=S)
+    rows  <- data.frame(lhs=y, op="~", rhs=x, est.pls=c(coefs))
+
+    parTable.s <- rbind(parTable.s, rows)
+  }
+
+  # loadings
+  for (lV in lVs) {
+    inds     <- parTable.f[parTable.f$lhs == lV & parTable.f$op == "=~", "rhs"]
+    loadings <- getPathCoefs(y=inds, x=lV, S=S)
+    rows     <- data.frame(lhs=lV, op="=~", rhs=inds, est.pls=c(loadings))
+    parTable.s <- rbind(parTable.s, rows)
+
+  }
+
+  # covariances
+  for (i in seq_len(NROW(Phi))) {
+    for (j in seq_len(i)) {
+      if (i == j) next
+
+      lhs <- Xs[c(i, j)] 
+      rhs <- Xs[c(j, i)]
+      cov <- Phi[i, j]
+      rows <- data.frame(lhs=lhs, op="~~", rhs=rhs, est.pls=cov)
+    }
+  }
+
+  # variances
+  rows       <- data.frame(lhs=Xs, op="~~", rhs=Xs, est.pls=c(diag(Phi)))
+  parTable.s <- rbind(parTable.s, rows) 
+
+  # residuals lVs
+  rows       <- data.frame(lhs=etas, op="~~", rhs=etas, est.pls=c(diag(Psi)))
+  parTable.s <- rbind(parTable.s, rows)
+  
+  # residuals oVs
+  rows       <- data.frame(lhs=mVYs, op="~~", rhs=mVYs, est.pls=c(diag(Theta)))
+  parTable.s <- rbind(parTable.s, rows)
+
+  # join on lhs, op and rhs
+  parTable.z <- merge(parTable.d, parTable.s, all.x=TRUE)
+  replace    <- parTable.z$free & !is.na(parTable.z$est.pls)
+  parTable.z[replace, "est"] <- parTable.z[replace, "est.pls"]
+
+  structure(parTable.z[parTable.z$free, "est"],
+            names=parTable.z[parTable.z$free, "label"])
 }
