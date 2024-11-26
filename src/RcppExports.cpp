@@ -70,6 +70,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// debugCppModel
+void debugCppModel(SEXP xptr, arma::vec theta);
+RcppExport SEXP _cavaan_debugCppModel(SEXP xptrSEXP, SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type theta(thetaSEXP);
+    debugCppModel(xptr, theta);
+    return R_NilValue;
+END_RCPP
+}
 // getVariablesEquation
 Rcpp::StringVector getVariablesEquation(std::string expr);
 RcppExport SEXP _cavaan_getVariablesEquation(SEXP exprSEXP) {
@@ -88,6 +99,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cavaan_fillRcppModel", (DL_FUNC) &_cavaan_fillRcppModel, 2},
     {"_cavaan_gradLogLikCpp", (DL_FUNC) &_cavaan_gradLogLikCpp, 2},
     {"_cavaan_logLikCpp", (DL_FUNC) &_cavaan_logLikCpp, 2},
+    {"_cavaan_debugCppModel", (DL_FUNC) &_cavaan_debugCppModel, 2},
     {"_cavaan_getVariablesEquation", (DL_FUNC) &_cavaan_getVariablesEquation, 1},
     {NULL, NULL, 0}
 };

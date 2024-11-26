@@ -119,7 +119,7 @@ Model *createModel(Rcpp::List model) {
   Rcpp::List parTable = model["parTable.d"];
   m->parTable = createParTable(parTable);
 
-  getBaseGradients(m);
+  // getBaseGradients(m);
 
   return m;
 }
@@ -136,7 +136,6 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
   for (int i = 0; i < (int)(parTable->fill.size()); i++) {
     if ((!parTable->fill[i] && !parTable->isEquation[i]) || 
         (!parTable->continueFromLast[i] && !parTable->free[i] && !fillConst)) continue;
-
     if (parTable->isEquation[i]) {
       tp = evaluateExpression(parTable->expressions[e++], evaluatedParams);
       evaluatedParams[parTable->label[i]] = tp;
@@ -149,7 +148,7 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
       evaluatedParams[parTable->label[i]] = tp;
     }
 
-    if (!arma::is_finite(tp)) Rcpp::Rcout << "label: " << parTable->label[i] << ", val: " << tp << '\n';
+    // if (!arma::is_finite(tp)) Rcpp::Rcout << "label: " << parTable->label[i] << ", val: " << tp << '\n';
     row   = parTable->row[i];
     col   = parTable->col[i];
     group = parTable->group[i];
@@ -255,7 +254,7 @@ Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
     okLDSigma  = arma::log_det(valLDSigma, signLDSigma, Sigma);
     okSigmaInv = arma::inv(SigmaInv, Sigma);
 
-    if (!okLDS || !okLDSigma || !okSigmaInv || signLDSigma < 0 || signLDS < 0) {
+    if (!okLDS || !okLDSigma || !okSigmaInv) {
       return Rcpp::NumericVector::create(Rcpp::NumericVector::get_na());
     }
    
@@ -264,4 +263,27 @@ Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
   }
 
   return Rcpp::NumericVector::create(logLik);
+}
+
+
+// [[Rcpp::export]]
+void debugCppModel(SEXP xptr, arma::vec theta) {
+  Rcpp::XPtr<Model> model(xptr);
+  fillModel(model, theta, false, true);
+  Rcpp::Rcout << "Sigma: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->Sigma << '\n';
+  Rcpp::Rcout << "SigmaInv: \n";
+  Rcpp::Rcout << arma::inv(model->matricesGroups[0]->Sigma) << '\n';
+  Rcpp::Rcout << "GammaStar: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->GammaStar << '\n';
+  Rcpp::Rcout << "BStar: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->BStar << '\n';
+  Rcpp::Rcout << "BStarInv: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->BStarInv << '\n';
+  Rcpp::Rcout << "Phi: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->Phi << '\n';
+  Rcpp::Rcout << "Mu: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->Mu << '\n';
+  Rcpp::Rcout << "Nu: \n";
+  Rcpp::Rcout << model->matricesGroups[0]->Nu << '\n';
 }

@@ -357,6 +357,7 @@ sortParTable <- function(parTable) {
 
 
 getStartingParams <- function(parTable.d, pls, xis, mVXs, etas, mVYs, lVs) {
+  names      <- parTable.d[parTable.d$free, "label"]
   parTable.f <- parTable.d[!parTable.d$op %in% LARGE_MATH_OPS, ]
   parTable.s <- data.frame(lhs=NULL, op=NULL, rhs=NULL, est.pls=NULL)
   
@@ -394,6 +395,7 @@ getStartingParams <- function(parTable.d, pls, xis, mVXs, etas, mVYs, lVs) {
       rhs <- Xs[c(j, i)]
       cov <- Phi[i, j]
       rows <- data.frame(lhs=lhs, op="~~", rhs=rhs, est.pls=cov)
+      parTable.s <- rbind(parTable.s, rows)
     }
   }
 
@@ -414,6 +416,7 @@ getStartingParams <- function(parTable.d, pls, xis, mVXs, etas, mVYs, lVs) {
   replace    <- parTable.z$free & !is.na(parTable.z$est.pls)
   parTable.z[replace, "est"] <- parTable.z[replace, "est.pls"]
 
-  structure(parTable.z[parTable.z$free, "est"],
-            names=parTable.z[parTable.z$free, "label"])
+  start <- structure(parTable.z[parTable.z$free, "est"],
+                     names=parTable.z[parTable.z$free, "label"])
+  start[names]
 }

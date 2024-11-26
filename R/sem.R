@@ -30,8 +30,8 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   lower  <- ifelse(isVar, yes=0, no=-Inf)
 
   # ------------------------------------------------------
-    browser()
   RcppModel <- createRcppModel(model)
+  # debugCppModel(RcppModel, start)
   gradient  <- if (num.grad) NULL else gradLogLikCpp
   est       <- #suppressWarnings(
     stats::nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,

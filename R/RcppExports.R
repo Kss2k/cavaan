@@ -21,6 +21,10 @@ logLikCpp <- function(theta, xptr) {
     .Call(`_cavaan_logLikCpp`, theta, xptr)
 }
 
+debugCppModel <- function(xptr, theta) {
+    invisible(.Call(`_cavaan_debugCppModel`, xptr, theta))
+}
+
 getVariablesEquation <- function(expr) {
     .Call(`_cavaan_getVariablesEquation`, expr)
 }

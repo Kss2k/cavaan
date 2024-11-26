@@ -15,7 +15,9 @@ tpb <- '
 '
 
 fit2 <- lavaan::sem(tpb, TPB)
-fit <- sem(tpb, data=TPB, num.grad=TRUE)
+fit <- sem(tpb, data=TPB, num.grad=TRUE) # something is wrong here!
+fit
+fit <- sem(tpb, data=TPB, num.grad=FALSE) 
 fit
 
 tpb_mean <- ' 
@@ -46,4 +48,7 @@ tpb_mean <- '
 
 fit2 <- lavaan::sem(tpb_mean, TPB)
 matrices <- lavaan::lavInspect(fit2, 'estimates')
+fit <- sem(tpb_mean, data=TPB, num.grad=TRUE)
+fit
 fit <- sem(tpb_mean, data=TPB, num.grad=FALSE)
+fit
