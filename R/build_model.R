@@ -24,6 +24,7 @@ build_submodel <- function(parTable, data) {
   Sigma <- G %*% BStar %*% GammaStar %*% Phi %*% t(GammaStar) %*% t(BStar) %*% t(G)
   S     <- stats::cov(data[ , colnames(Sigma)])
   Nu    <- as.matrix(colMeans(data[ , colnames(Sigma)]))
+  Nu    <- if (!any(parTable$op == "~1")) allZero(Nu) else Nu
   Mu    <- G %*% BStar %*% GammaStar %*% Tau
 
   matrices <- list(

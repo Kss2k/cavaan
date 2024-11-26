@@ -114,3 +114,9 @@ time <- function(expr) {
   cat("Elapsed = ", end - start, "\n")
   result
 }
+
+
+allZero <- function(X) {
+  X[TRUE] <- 0
+  X
+}

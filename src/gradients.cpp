@@ -55,13 +55,23 @@ arma::vec getGradientModelSimple(const arma::vec& theta, Model* model) {
     const arma::mat GammaStar_T = GammaStar.t();
     const arma::mat G_T         = G.t();
     const arma::mat Q           = SigmaInv - SigmaInv * S * SigmaInv;
+    
+
+    // THIS IS NOT ENTIERLY CORRECT! -------------------------------------------
+    // The derivatives fro Phi, Gamma and B assume that they do not affect
+    // the meanstructure of the model! In practice, it seems like this is fine!
+    // but it might affect parameter estimates for some more complicated examples
+    // and more likely the std.error estimates obtained using the derivatives. 
+    // DerivTau is correct however, as the mean-structure does not affect the 
+    // other parts of the model.
 
     arma::mat DerivPhi = (GammaStar_T * BStarInv_T * G_T * Q * G * BStarInv * GammaStar);
     arma::mat DerivGammaStar = (BStarInv_T * G_T * Q * G * BStarInv * GammaStar * Phi);
     arma::mat DerivBStar = (BStarInv_T * G_T * Q * G * BStarInv * 
         GammaStar * Phi * GammaStar_T * BStarInv_T);
     arma::mat DerivTau = (G * BStarInv * GammaStar).t() * SigmaInv * (Nu - Mu);
-
+    
+    // -------------------------------------------------------------------------
     int t = 0;
     for (int i = 0; i < (int)(parTable->free.size()) && t < npar; i++) {
       if (!parTable->free[i]) continue;
