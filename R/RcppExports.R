@@ -13,8 +13,12 @@ fillRcppModel <- function(xptr, theta) {
     .Call(`_cavaan_fillRcppModel`, xptr, theta)
 }
 
-gradLogLikCpp <- function(theta, xptr) {
-    .Call(`_cavaan_gradLogLikCpp`, theta, xptr)
+gradLogLikCppSimple <- function(theta, xptr) {
+    .Call(`_cavaan_gradLogLikCppSimple`, theta, xptr)
+}
+
+gradLogLikCppLVMeans <- function(theta, xptr) {
+    .Call(`_cavaan_gradLogLikCppLVMeans`, theta, xptr)
 }
 
 logLikCpp <- function(theta, xptr) {

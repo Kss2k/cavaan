@@ -130,6 +130,7 @@ int countFree(std::vector<bool> free);
 void getBaseGradients(Model *model);
 // arma::vec getGradientModel(const arma::vec &theta, Model *model);
 arma::vec getGradientModelSimple(const arma::vec &theta, Model *model);
+arma::vec getGradientModelLVMeans(const arma::vec &theta, Model *model);
 arma::vec getGradientModelGeneral(const arma::vec &theta, Model *model);
 arma::vec normalize(arma::vec x);
 double getLogLikModel(const arma::vec &theta, Model *model);

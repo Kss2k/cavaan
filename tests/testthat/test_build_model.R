@@ -53,3 +53,30 @@ fit
 # this is incorrect!
 fit <- sem(tpb_mean, data=TPB, num.grad=FALSE)
 fit
+
+
+tpb_mean_ov <- ' 
+# Outer Model (Based on Hagger et al., 2007)
+  ATT =~ att1 + att2 + att3 + att4 + att5
+  SN =~ sn1 + sn2
+  PBC =~ pbc1 + pbc2 + pbc3
+  INT =~ int1 + int2 + int3
+  BEH =~ b1 + b2
+
+  b1   ~ 1
+  int1 ~ 1
+  pbc1 ~ 1
+  att1 ~ 1
+  sn1  ~ 1
+
+# Inner Model (Based on Steinmetz et al., 2011)
+  # Causal Relationsships
+  INT ~ a * ATT + b * SN + c * PBC
+  BEH ~ INT + PBC 
+'
+
+fit <- sem(tpb_mean_ov, data=TPB, num.grad=TRUE)
+fit
+# this is incorrect!
+fit <- sem(tpb_mean_ov, data=TPB, num.grad=FALSE)
+fit
