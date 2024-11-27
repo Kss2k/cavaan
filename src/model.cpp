@@ -119,8 +119,6 @@ Model *createModel(Rcpp::List model) {
   Rcpp::List parTable = model["parTable.d"];
   m->parTable = createParTable(parTable);
 
-  // getBaseGradients(m);
-
   return m;
 }
 
@@ -197,9 +195,6 @@ Rcpp::NumericVector ViewModelCreation(Rcpp::List RModel, arma::vec theta) {
   
   fillModel(model, theta, false, true);
   Rcpp::Rcout << model->matricesGroups[0]->Sigma << '\n';
-  
-  getBaseGradients(model);
-  Rcpp::Rcout << model->gradientMatricesParams[0]->matricesGroups[0]->GammaStar << '\n';
 
   return model->ngroups;  
 }
@@ -233,6 +228,24 @@ arma::vec gradLogLikCppSimple(arma::vec theta, SEXP xptr) {
 arma::vec gradLogLikCppLVMeans(arma::vec theta, SEXP xptr) {
   Rcpp::XPtr<Model> model(xptr);
   return getGradientModelLVMeans(theta, model);
+}
+
+
+// [[Rcpp::export]]
+Rcpp::NumericVector gradLogLikNumericCpp(const arma::vec& theta, SEXP xptr, double h=1e-6) {
+  Rcpp::XPtr<Model> model(xptr);
+  Rcpp::NumericVector grad(theta.size());
+  Rcpp::NumericVector logLikBase = logLikCpp(theta, model);
+  Rcpp::NumericVector logLikPlus;
+
+  for (int i = 0; i < (int)theta.size(); i++) {
+    arma::vec thetaPlus = theta;
+    thetaPlus[i] += h;
+    logLikPlus = logLikCpp(thetaPlus, model);
+    grad[i] = (logLikPlus[0] - logLikBase[0]) / h; 
+  }
+
+  return grad;
 }
 
 

@@ -89,29 +89,12 @@ typedef struct {
 } ParTable;
 
 
-// GradientMatricesParam
-typedef struct {
-  std::vector<MatricesGroup*> matricesGroups; // vector with elem for each group
-} GradientMatricesParam;
-
-
-typedef struct {
-  int iterations;
-  int maxIterations;
-  double threshold;
-  bool convergence;
-  arma::vec par;
-} OptimizerInfo;
-
-
 // Model
 typedef struct {
   std::vector<MatricesGroup*> matricesGroups;
-  std::vector<GradientMatricesParam*> gradientMatricesParams; // vector with elem for each param
   ParTable *parTable;
   int ngroups;
   int p;
-  OptimizerInfo optimizerInfo;
 } Model;
 
 
@@ -126,14 +109,12 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
 int countFree(std::vector<bool> free);
 
 
-// gradient.cpp
-void getBaseGradients(Model *model);
 // arma::vec getGradientModel(const arma::vec &theta, Model *model);
 arma::vec getGradientModelSimple(const arma::vec &theta, Model *model);
 arma::vec getGradientModelLVMeans(const arma::vec &theta, Model *model);
 arma::vec getGradientModelGeneral(const arma::vec &theta, Model *model);
-arma::vec normalize(arma::vec x);
-double getLogLikModel(const arma::vec &theta, Model *model);
+Rcpp::NumericVector gradLogLikNumericCpp(const arma::vec& theta, SEXP xptr, double h);
+Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr);
 
 
 // parse_eqations.cpp

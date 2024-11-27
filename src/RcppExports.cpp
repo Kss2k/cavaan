@@ -70,6 +70,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// gradLogLikNumericCpp
+Rcpp::NumericVector gradLogLikNumericCpp(const arma::vec& theta, SEXP xptr, double h);
+RcppExport SEXP _cavaan_gradLogLikNumericCpp(SEXP thetaSEXP, SEXP xptrSEXP, SEXP hSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
+    Rcpp::traits::input_parameter< double >::type h(hSEXP);
+    rcpp_result_gen = Rcpp::wrap(gradLogLikNumericCpp(theta, xptr, h));
+    return rcpp_result_gen;
+END_RCPP
+}
 // logLikCpp
 Rcpp::NumericVector logLikCpp(const arma::vec& theta, SEXP xptr);
 RcppExport SEXP _cavaan_logLikCpp(SEXP thetaSEXP, SEXP xptrSEXP) {
@@ -111,6 +124,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cavaan_fillRcppModel", (DL_FUNC) &_cavaan_fillRcppModel, 2},
     {"_cavaan_gradLogLikCppSimple", (DL_FUNC) &_cavaan_gradLogLikCppSimple, 2},
     {"_cavaan_gradLogLikCppLVMeans", (DL_FUNC) &_cavaan_gradLogLikCppLVMeans, 2},
+    {"_cavaan_gradLogLikNumericCpp", (DL_FUNC) &_cavaan_gradLogLikNumericCpp, 3},
     {"_cavaan_logLikCpp", (DL_FUNC) &_cavaan_logLikCpp, 2},
     {"_cavaan_debugCppModel", (DL_FUNC) &_cavaan_debugCppModel, 2},
     {"_cavaan_getVariablesEquation", (DL_FUNC) &_cavaan_getVariablesEquation, 1},

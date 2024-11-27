@@ -1,6 +1,6 @@
 devtools::load_all()
 
-tpb <- ' 
+tpb <- "
 # Outer Model (Based on Hagger et al., 2007)
   ATT =~ att1 + att2 + att3 + att4 + att5
   SN =~ sn1 + sn2
@@ -11,16 +11,16 @@ tpb <- '
 # Inner Model (Based on Steinmetz et al., 2011)
   # Causal Relationsships
   INT ~ a * ATT + b * SN + c * PBC
-  BEH ~ INT + PBC 
-'
+  BEH ~ INT + PBC
+"
 
 fit2 <- lavaan::sem(tpb, TPB)
-fit <- sem(tpb, data=TPB, num.grad=TRUE)
+fit <- sem(tpb, data = TPB, num.grad = TRUE)
 fit
-fit <- sem(tpb, data=TPB, num.grad=FALSE) 
+fit <- sem(tpb, data = TPB, num.grad = FALSE)
 fit
 
-tpb_mean <- ' 
+tpb_mean <- "
 # Outer Model (Based on Hagger et al., 2007)
   ATT =~ att1 + att2 + att3 + att4 + att5
   SN =~ sn1 + sn2
@@ -33,7 +33,7 @@ tpb_mean <- '
   PBC ~1
   ATT ~1
   SN ~1
-  
+
   b1   ~ 0*1
   int1 ~ 0*1
   pbc1 ~ 0*1
@@ -43,19 +43,19 @@ tpb_mean <- '
 # Inner Model (Based on Steinmetz et al., 2011)
   # Causal Relationsships
   INT ~ a * ATT + b * SN + c * PBC
-  BEH ~ INT + PBC 
-'
+  BEH ~ INT + PBC
+"
 
 fit2 <- lavaan::sem(tpb_mean, TPB)
-matrices <- lavaan::lavInspect(fit2, 'estimates')
-fit <- sem(tpb_mean, data=TPB, num.grad=TRUE)
+matrices <- lavaan::lavInspect(fit2, "estimates")
+fit <- sem(tpb_mean, data = TPB, num.grad = TRUE)
 fit
 # this is incorrect!
-fit <- sem(tpb_mean, data=TPB, num.grad=FALSE)
+fit <- sem(tpb_mean, data = TPB, num.grad = FALSE)
 fit
 
 
-tpb_mean_ov <- ' 
+tpb_mean_ov <- "
 # Outer Model (Based on Hagger et al., 2007)
   ATT =~ att1 + att2 + att3 + att4 + att5
   SN =~ sn1 + sn2
@@ -72,11 +72,11 @@ tpb_mean_ov <- '
 # Inner Model (Based on Steinmetz et al., 2011)
   # Causal Relationsships
   INT ~ a * ATT + b * SN + c * PBC
-  BEH ~ INT + PBC 
-'
+  BEH ~ INT + PBC
+"
 
-fit <- sem(tpb_mean_ov, data=TPB, num.grad=TRUE)
+fit <- sem(tpb_mean_ov, data = TPB, num.grad = TRUE)
 fit
 # this is incorrect!
-fit <- sem(tpb_mean_ov, data=TPB, num.grad=FALSE)
+fit <- sem(tpb_mean_ov, data = TPB, num.grad = FALSE)
 fit

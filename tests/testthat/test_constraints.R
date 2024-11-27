@@ -21,4 +21,5 @@ syntax <- get_pi_syntax(m1, method="ca")
 # benchmark(cavaan::sem(syntax, data, num.grad=true), replications=10)
 #>        test replications elapsed relative user.self sys.self ...
 #> cavaan::sem           10  68.511        1    68.516        0 ...
-time(cavaan::sem(syntax, data, num.grad=TRUE))
+time(est <- cavaan::sem(syntax, data, num.grad=TRUE))
+time(lavaan::sem(syntax, data))

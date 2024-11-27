@@ -21,6 +21,10 @@ gradLogLikCppLVMeans <- function(theta, xptr) {
     .Call(`_cavaan_gradLogLikCppLVMeans`, theta, xptr)
 }
 
+gradLogLikNumericCpp <- function(theta, xptr, h = 1e-6) {
+    .Call(`_cavaan_gradLogLikNumericCpp`, theta, xptr, h)
+}
+
 logLikCpp <- function(theta, xptr) {
     .Call(`_cavaan_logLikCpp`, theta, xptr)
 }
