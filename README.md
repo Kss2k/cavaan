@@ -50,5 +50,5 @@ benchmark(cavaan::sem(syntax, data, num.grad=TRUE), replications=10)
       then the derivative of the equality constraints is $`\frac{\partial f(\theta)}{\partial \theta}`$. 
       The derivative of the equality constraints is a (Jacobian) ($`I \times J`$) matrix, where the element of the $`i`$-th row is 
       The derivative of the $`i`$-th element of $`f(\theta)`$ with respect to the $`j`$-th element of $`\theta`$.
-      The derivative of the log-likelihood with respect to $`f(\theta)`$ is $`\frac{\partial F(f(\theta))}{\partial f(\theta})`$.
-      The derivative of the log-likelihood with respect to $`\theta`$ is can then be writeen as $`\left[\frac{\partial f(\theta)}{\partial \theta}\right]^T\frac{\partial F(f(\theta))}{\partial f(\theta})`$.
+      The derivative of the log-likelihood with respect to $`f(\theta)`$ is $`\frac{\partial F(f(\theta))}{\partial f(\theta)}`$.
+      The derivative of the log-likelihood with respect to $`\theta`$ is can then be writeen as $`\left[\frac{\partial f(\theta)}{\partial \theta}\right]^T\frac{\partial F(f(\theta))}{\partial f(\theta)}`$.
