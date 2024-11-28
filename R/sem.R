@@ -36,7 +36,7 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   est       <- #suppressWarnings(
     stats::nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
                   gradient=gradient)
- # )
+  #)
  
   par            <- est$par
   model.f        <- fillModel(model, par)

@@ -1,5 +1,6 @@
 #' @export
 print.cavaan <- function(x, ...) {
-  print(x$parTable.d)
+  cat("NLMINB:", x$nlminb$message, "\n")
+  print(x$parTable.d[c("lhs", "op", "rhs", "est", "label")])
 }
 
