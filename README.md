@@ -42,13 +42,13 @@ benchmark(cavaan::sem(syntax, data, num.grad=TRUE), replications=10)
 #> cavaan::sem           10  68.511        1    68.516        0 ...
 ```
 
-# To Do
+# TODO:
 
 - [ ] Improve calculation of derivatives of latent intercepts (broken)
 - [ ] Improve calculation of derivatives of equatlity constraints: 
-      let $`\theta`$ ($`(J \times 1)`$ be the vector of free parameters, and $`f(\theta)`$ ($`(I \times 1)`$ be the vector of equality constraints,
+      let $`\theta`$ $`(J \times 1)`$ be the vector of free parameters, and $`f(\theta)`$ $`(I \times 1)`$ be the vector of equality constraints,
       then the derivative of the equality constraints is $`\frac{\partial f(\theta)}{\partial \theta}`$. 
-      the derivative of the equality constraints is a (Jacobian) ($`I \times J`$) matrix, where the element of the $`i`$-th row is 
-      the derivative of the $`i`$-th element of $`f(\theta)`$ with respect to the $`j`$-th element of $`\theta`$.
+      The derivative of the equality constraints is a (Jacobian) ($`I \times J`$) matrix, where the element of the $`i`$-th row is 
+      The derivative of the $`i`$-th element of $`f(\theta)`$ with respect to the $`j`$-th element of $`\theta`$.
       The derivative of the log-likelihood with respect to $`f(\theta)`$ is $`\frac{\partial F(f(\theta))}{\partial f(\theta})`$.
-      The derivative of the log-likelihood with respect to $`\theta`$ is can then be writeen as $`{\frac{\partial f(\theta)}{\partial \theta}}^T\frac{\partial F(f(\theta))}{\partial f(\theta})`$.
+      The derivative of the log-likelihood with respect to $`\theta`$ is can then be writeen as $`[\frac{\partial f(\theta)}{\partial \theta}]^T\frac{\partial F(f(\theta))}{\partial f(\theta})`$.
