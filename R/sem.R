@@ -32,7 +32,10 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   # ------------------------------------------------------
   RcppModel <- createRcppModel(model)
   # debugCppModel(RcppModel, start)
-  gradient  <- if (num.grad) NULL else gradLogLikCppSimple # LVMeans
+  gradient  <- if (num.grad) NULL else gradLogLikNumericCpp # gradLogLikCppLVMeans
+  analytic.g <- structure(as.vector(gradLogLikCppLVMeans(start, RcppModel)), names = names(start))
+  numeric.g <- structure(gradLogLikNumericCpp(start, RcppModel), names = names(start))
+  browser()
   est       <- #suppressWarnings(
     stats::nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
                   gradient=gradient)

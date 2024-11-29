@@ -102,41 +102,41 @@ arma::vec getGradientModelLVMeans(const arma::vec& theta, Model* model) {
     const arma::mat G_T         = G.t();
     const arma::mat Q           = SigmaInv - SigmaInv * S * SigmaInv;
    
-    arma::mat DerivTau = (G * BStarInv * GammaStar).t() * SigmaInv * (Nu - Mu);
-   
-    // B
-    arma::mat M = Sigma;
-    arma::mat Snm = Nu - Mu;
-    arma::mat K = BStarInv;
-    arma::mat K_T = K.t();
+    const arma::mat DerivTau = (G * BStarInv * GammaStar).t() * SigmaInv * (Nu - Mu);
+    const arma::mat M = Sigma;
+    const arma::mat Snm = Nu - Mu;
+    const arma::mat K = G * BStarInv;
+    const arma::mat K_T = K.t();
+    const arma::mat H = G * BStarInv;
 
-    arma::mat DerivBStar1 = - 2 * (BStarInv_T * G_T * Q * G * BStarInv * 
+    const arma::mat DerivBStar1 = - 2 * (BStarInv_T * G_T * Q * G * BStarInv * 
         GammaStar * Phi * GammaStar_T * BStarInv_T);
-    arma::mat DerivBStar2 = - 2 * BStarInv * G_T * SigmaInv * Snm * Tau.t() * 
-      GammaStar_T * BStarInv_T + BStarInv * G_T * SigmaInv * Sigma * SigmaInv *
-      Snm * Snm.t() * SigmaInv * G * BStarInv;
-    arma::mat DerivBStar = DerivBStar1 + DerivBStar2;
+
+
+   // const arma::mat DerivBStar2 = BStarInv * G_T * SigmaInv * Snm * Tau.t() * 
+   //   GammaStar_T * BStarInv + 2 * BStarInv * G_T * SigmaInv * Sigma * SigmaInv *
+   //   Snm * Snm.t() * SigmaInv * G * BStarInv;
+     // 2B−1Γτ(H′M−1S)′−[M−1SS′M−1HΓΦΓ′B−1+(M−1SS′M−1HΓΦΓ′B−1)′]
+    const arma::mat DerivBStar2 = 2 * BStarInv * GammaStar * Tau.t() * SigmaInv * H.t() - 
+      (SigmaInv * S * S.t() * SigmaInv * H * GammaStar * Phi * GammaStar.t() * BStarInv + 
+       SigmaInv * S * S.t() * SigmaInv * H * GammaStar * Phi * GammaStar.t() * BStarInv).t();
+
+    const arma::mat DerivBStar = DerivBStar1 + DerivBStar2;
   
-    // Gamma
-    K = G * BStarInv;
-    K_T = K.t();
 
-    arma::mat DerivGammaStar1 = 2 * (BStarInv_T * G_T * Q * G * BStarInv * GammaStar * Phi);
-    arma::mat DerivGammaStar2 = - 2 * K_T * SigmaInv * Snm * Tau.t() - 
-      2 * GammaStar_T * K_T * SigmaInv * Snm * Snm.t() * SigmaInv * K * Phi;
-    arma::mat DerivGammaStar = DerivGammaStar1 + DerivGammaStar2;
-    
-    // Phi
-    K = G * BStarInv * GammaStar;
-    K_T = K.t();
+    const arma::mat DerivGammaStar1 = 2 * (BStarInv_T * G_T * Q * G * BStarInv * GammaStar * Phi);
+    const arma::mat DerivGammaStar2 = - 2 * H.t() * SigmaInv * Snm * Tau.t() - 2 * H.t() * SigmaInv *
+      Snm * Snm.t() * SigmaInv * H * GammaStar * Phi;
 
-    arma::mat DerivPhi1 = (GammaStar_T * BStarInv_T * G_T * Q * G * BStarInv * GammaStar);
-    arma::mat DerivPhi2 = - K_T * SigmaInv * Snm * Tau.t() * SigmaInv * K;
-    arma::mat DerivPhi = DerivPhi1 + DerivPhi2;
+
+    const arma::mat DerivGammaStar = DerivGammaStar1 + DerivGammaStar2;
     
+    const arma::mat DerivPhi1 = (GammaStar_T * BStarInv_T * G_T * Q * G * BStarInv * GammaStar);
+    const arma::mat DerivPhi2 = - GammaStar_T * H.t() * SigmaInv * Snm * Snm.t() * 
+      SigmaInv * H * GammaStar;
+    const arma::mat DerivPhi = DerivPhi1 + DerivPhi2;
 
     
-    // -------------------------------------------------------------------------
     int t = 0;
     for (int i = 0; i < (int)(parTable->free.size()) && t < npar; i++) {
       if (!parTable->free[i]) continue;

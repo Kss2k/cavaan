@@ -43,7 +43,7 @@ tpb_mean <- "
 # Inner Model (Based on Steinmetz et al., 2011)
   # Causal Relationsships
   INT ~ a * ATT + b * SN + c * PBC
-  BEH ~ INT + PBC
+  BEH ~ d * INT + e * PBC
 "
 
 fit2 <- lavaan::sem(tpb_mean, TPB)
@@ -80,3 +80,17 @@ fit
 # this is incorrect!
 fit <- sem(tpb_mean_ov, data = TPB, num.grad = FALSE)
 fit
+
+m <- fit$models[[1]]$matrices
+S <- m$Nu - m$G %*% m$BStarInv %*% m$GammaStar %*% m$Tau
+H <- m$G %*% m$BStarInv
+
+- t(m$GammaStar) %*% t(H) %*% solve(m$Sigma) %*% S %*% t(S) %*% solve(m$Sigma) %*% H %*% m$GammaStar
+
+# - 2 * t(H) %*% solve(m$Sigma) %*% S %*% t(m$Tau) - 2 * t(H) %*% solve(m$Sigma) %*% 
+#   S %*% t(S) %*% solve(m$Sigma) %*% H %*% m$GammaStar %*% m$Phi
+
+# - 2* m$BStarInv %*% t(m$G) %*% solve(m$Sigma) %*% S %*% t(m$Tau) %*% t(m$GammaStar) %*% m$BStarInv 
+#   +
+#  m$BStarInv %*% t(m$G) %*%
+#   solve(m$Sigma) %*% m$Sigma %*% S %*% t(S) %*% solve(m$Sigma) %*% m$G %*% m$BStarInv
