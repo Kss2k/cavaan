@@ -218,38 +218,6 @@ RcppExport SEXP fillRcppModel(SEXP xptr, arma::vec theta) {
 
 
 // [[Rcpp::export]]
-arma::vec gradLogLikCppSimple(arma::vec theta, SEXP xptr) {
-  Rcpp::XPtr<Model> model(xptr);
-  return getGradientModelSimple(theta, model);
-}
-
-
-// [[Rcpp::export]]
-arma::vec gradLogLikCppLVMeans(arma::vec theta, SEXP xptr) {
-  Rcpp::XPtr<Model> model(xptr);
-  return getGradientModelLVMeans(theta, model);
-}
-
-
-// [[Rcpp::export]]
-Rcpp::NumericVector gradLogLikNumericCpp(const arma::vec& theta, SEXP xptr, double h=1e-6) {
-  Rcpp::XPtr<Model> model(xptr);
-  Rcpp::NumericVector grad(theta.size());
-  Rcpp::NumericVector logLikBase = logLikCpp(theta, model);
-  Rcpp::NumericVector logLikPlus;
-
-  for (int i = 0; i < (int)theta.size(); i++) {
-    arma::vec thetaPlus = theta;
-    thetaPlus[i] += h;
-    logLikPlus = logLikCpp(thetaPlus, model);
-    grad[i] = (logLikPlus[0] - logLikBase[0]) / h; 
-  }
-
-  return grad;
-}
-
-
-// [[Rcpp::export]]
 Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr) {
   Rcpp::XPtr<Model> model(xptr);
   fillModel(model, theta, false, true);

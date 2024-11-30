@@ -109,10 +109,10 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
 int countFree(std::vector<bool> free);
 
 
-// arma::vec getGradientModel(const arma::vec &theta, Model *model);
-arma::vec getGradientModelSimple(const arma::vec &theta, Model *model);
+// gradients.cpp
+arma::vec getGradientModelNoMeans(const arma::vec& theta, Model* model);
+arma::vec getGradientModelOVMeans(const arma::vec &theta, Model *model);
 arma::vec getGradientModelLVMeans(const arma::vec &theta, Model *model);
-arma::vec getGradientModelGeneral(const arma::vec &theta, Model *model);
 Rcpp::NumericVector gradLogLikNumericCpp(const arma::vec& theta, SEXP xptr, double h);
 Rcpp::NumericVector logLikCpp(const arma::vec &theta, SEXP xptr);
 
