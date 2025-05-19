@@ -341,8 +341,8 @@ arma::vec getGradientModelLVMeans(const arma::vec& theta, Model* model) {
       switch (parTable->matrix[i]) {
         case BETA_STAR:  {grad[t++] += DerivBStar.at(row, col); break;}
         case GAMMA_STAR: {grad[t++] += DerivGammaStar.at(row, col); break;}
-        case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
-        // case PHI:        {grad[t++] += DerivPhi.at(row, col); break;}
+        // case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
+        case PHI:        {grad[t++] += DerivPhi.at(row, col); break;}
         case TAU:        {grad[t++] += DerivTau.at(row, 0); break;}
         default: Rcpp::stop("Unrecognized matrix index");
       }
