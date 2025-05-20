@@ -154,7 +154,7 @@ void fillMatricesGroups(std::vector<MatricesGroup*> matricesGroups, ParTable *pa
     matrices = matricesGroups[group];
 
     switch (parTable->matrix[i]) {
-      case BETA_STAR:  {matrices->BStar.at(row, col)     = tp; break;}
+      case BETA_STAR:  {matrices->BStar.at(row, col)     = -tp; break;}
       case GAMMA_STAR: {matrices->GammaStar.at(row, col) = tp; break;}
       case PHI:        {matrices->Phi.at(row, col)       = tp; break;}
       case TAU:        {matrices->Tau.at(row, col)       = tp; break;}
@@ -274,4 +274,10 @@ void debugCppModel(SEXP xptr, arma::vec theta) {
   Rcpp::Rcout << model->matricesGroups[0]->Mu << '\n';
   Rcpp::Rcout << "Nu: \n";
   Rcpp::Rcout << model->matricesGroups[0]->Nu << '\n';
+
+  Rcpp::Rcout << "GammaStar %*% Tau"
+  Rcpp::Rcout << model->matricesGroups[0]->GammaStar * model->matricesGroups[0]->Tau << '\n';
+  Rcpp::Rcout << "G %*% BStar^-1 %*% GammaStar %*% Tau"
+  Rcpp::Rcout << model->matricesGroups[0]->BStarInv * model->matricesGroups[0]->GammaStar * model->matricesGroups[0]->Tau << '\n';
+  Rcpp::Rcout << model->matricesGroups[0]->G * model->matricesGroups[0]->BStarInv * model->matricesGroups[0]->GammaStar * model->matricesGroups[0]->Tau << '\n';
 }

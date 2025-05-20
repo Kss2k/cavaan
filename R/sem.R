@@ -139,7 +139,7 @@ sem <- function(syntax, data, group=NULL, start=NULL, num.grad=TRUE) {
   analytic.lv.g <- structure(as.vector(gradLogLikCppLVMeans(start, RcppModel)), names = names(start))
   analytic.ov.g <- structure(as.vector(gradLogLikCppOVMeans(start, RcppModel)), names = names(start))
   numeric.g <- structure(gradLogLikNumericCpp(start, RcppModel), names = names(start))
-  browser()
+
   est       <- #suppressWarnings(
     stats::nlminb(start, objective=logLikCpp, xptr=RcppModel, lower=lower, upper=upper,
                   gradient=gradient)

@@ -43,7 +43,7 @@ arma::vec getGradientModelNoMeans(const arma::vec& theta, Model* model) {
       int col = parTable->col[i];
 
       switch (parTable->matrix[i]) {
-        case BETA_STAR:  {grad[t++] += -2 * DerivBStar.at(row, col); break;}
+        case BETA_STAR:  {grad[t++] += 2 * DerivBStar.at(row, col); break;} // used to be -2, but changed to 2, since we fill with -tp in fillModel()
         case GAMMA_STAR: {grad[t++] +=  2 * DerivGammaStar.at(row, col); break;}
         case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
         default: Rcpp::stop("Unrecognized matrix index");
@@ -100,7 +100,7 @@ arma::vec getGradientModelOVMeans(const arma::vec& theta, Model* model) {
       int col = parTable->col[i];
 
       switch (parTable->matrix[i]) {
-        case BETA_STAR:  {grad[t++] += -2 * DerivBStar.at(row, col); break;}
+        case BETA_STAR:  {grad[t++] += 2 * DerivBStar.at(row, col); break;}
         case GAMMA_STAR: {grad[t++] +=  2 * DerivGammaStar.at(row, col); break;}
         case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
         case TAU:        {grad[t++] += -2 * DerivTau.at(row, 0); break;}
@@ -341,8 +341,7 @@ arma::vec getGradientModelLVMeans(const arma::vec& theta, Model* model) {
       switch (parTable->matrix[i]) {
         case BETA_STAR:  {grad[t++] += DerivBStar.at(row, col); break;}
         case GAMMA_STAR: {grad[t++] += DerivGammaStar.at(row, col); break;}
-        // case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
-        case PHI:        {grad[t++] += DerivPhi.at(row, col); break;}
+        case PHI:        {grad[t++] += (2 - I.at(row, col)) * DerivPhi.at(row, col); break;}
         case TAU:        {grad[t++] += DerivTau.at(row, 0); break;}
         default: Rcpp::stop("Unrecognized matrix index");
       }

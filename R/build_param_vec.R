@@ -371,7 +371,7 @@ getStartingParams <- function(parTable.d, pls, xis, mVXs, etas, mVYs, lVs) {
   Y <- unique(parTable.f[parTable.f$op == "~", "lhs"])
   for (y in Y) {
     x     <- parTable.f[parTable.f$lhs == y & parTable.f$op == "~", "rhs"]
-    coefs <- - getPathCoefs(y=y, x=x, S=S)
+    coefs <- getPathCoefs(y=y, x=x, S=S)
     rows  <- data.frame(lhs=y, op="~", rhs=x, est.pls=c(coefs))
 
     parTable.s <- rbind(parTable.s, rows)

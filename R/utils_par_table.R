@@ -194,11 +194,12 @@ getIsExpression <- function(parTable) {
 cleanParTable.d <- function(parTable.d, theta, model) {
   etas <- model$models[[1]]$info$etas
   
-  isNegative <- parTable.d$op == "~" | 
-    (parTable.d$op == "~1" & parTable.d$lhs %in% etas)
+  # isNegative <- parTable.d$op == "~" | 
+  #   (parTable.d$op == "~1" & parTable.d$lhs %in% etas)
   isFree     <- parTable.d$free
 
-  parTable.d[isFree, "est"] <- ifelse(isNegative[isFree], yes=-theta, no=theta)
+  # parTable.d[isFree, "est"] <- ifelse(isNegative[isFree], yes=-theta, no=theta)
+  parTable.d[isFree, "est"] <- theta
  
   parTable.d <- sortDfBy(parTable.d, x="continue", decreasing=TRUE) |>
     sortDfBy(x="free", decreasing=TRUE) |> sortDfBy(x="lhs") |>
